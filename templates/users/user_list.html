@@ -1,0 +1,148 @@
+{% extends 'base_app.html' %}
+
+{% block title %}Team & User Access Management — StockFlow{% endblock %}
+{% block page_title %}Team & Role Permissions{% endblock %}
+{% block page_subtitle %}Manage staff authentication, security levels, and operational roles{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <!-- Top Bar with Add User Button -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <h2 class="h4 fw-bold text-dark mb-1">System Team Directory</h2>
+      <p class="text-muted small mb-0">{{ active_users }} active account{{ active_users|pluralize }} / {{ total_users }} total team members.</p>
+    </div>
+
+    <a href="{% url 'user_create' %}" class="btn btn-sf-primary d-flex align-items-center gap-2">
+      <i class="bi bi-person-plus-fill"></i> Add Team Member
+    </a>
+  </div>
+
+  <!-- Search & Role Filter Card -->
+  <div class="card card-sf mb-4">
+    <div class="card-body p-3">
+      <form method="get" action="{% url 'user_list' %}" class="row g-2 align-items-center">
+        <div class="col-md-5">
+          <div class="input-group">
+            <span class="input-group-text bg-white text-muted border-end-0"><i class="bi bi-search"></i></span>
+            <input type="text" name="q" value="{{ query }}" class="form-control border-start-0" placeholder="Search by name, username, or email...">
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <select name="role" class="form-select">
+            <option value="">All Roles</option>
+            {% for val, label in roles %}
+              <option value="{{ val }}" {% if role_filter == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-2">
+          <select name="status" class="form-select">
+            <option value="">All Statuses</option>
+            <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Only</option>
+            <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive Only</option>
+          </select>
+        </div>
+
+        <div class="col-md-2 d-flex gap-2">
+          <button type="submit" class="btn btn-sf-slate w-100">Filter</button>
+          {% if query or role_filter or status_filter %}
+            <a href="{% url 'user_list' %}" class="btn btn-outline-secondary" title="Clear search">
+              <i class="bi bi-x-circle"></i>
+            </a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Users Table Card -->
+  <div class="card card-sf">
+    <div class="card-body p-0">
+      {% if users %}
+        <div class="table-responsive">
+          <table class="table table-sf mb-0">
+            <thead>
+              <tr>
+                <th>User / Name</th>
+                <th>Email Address</th>
+                <th>Phone Contact</th>
+                <th>Assigned Role</th>
+                <th class="text-center">Account Status</th>
+                <th>Joined Date</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for u in users %}
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="sidebar-user-avatar" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                        {{ u.username|slice:":1"|upper }}
+                      </div>
+                      <div>
+                        <strong class="text-dark">{{ u.get_full_name|default:u.username }}</strong>
+                        <div class="small text-muted font-monospace">@{{ u.username }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{{ u.email|default:"—" }}</td>
+                  <td><span class="font-monospace small text-muted">{{ u.phone|default:"—" }}</span></td>
+                  <td>
+                    <span class="badge {{ u.role_badge_class }}">{{ u.get_role_display }}</span>
+                  </td>
+                  <td class="text-center">
+                    {% if u.is_active %}
+                      <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Active</span>
+                    {% else %}
+                      <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">Inactive</span>
+                    {% endif %}
+                  </td>
+                  <td class="small text-muted">{{ u.date_joined|date:"M d, Y" }}</td>
+                  <td class="text-end">
+                    <div class="d-inline-flex gap-1">
+                      <a href="{% url 'user_edit' pk=u.pk %}" class="btn btn-sm btn-outline-primary py-1 px-2" title="Edit Permissions">
+                        <i class="bi bi-pencil"></i>
+                      </a>
+
+                      {% if u != request.user %}
+                        <form method="post" action="{% url 'user_toggle_status' pk=u.pk %}" class="d-inline">
+                          {% csrf_token %}
+                          {% if u.is_active %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2" title="Deactivate User" onclick="return confirm('Deactivate this user account?')">
+                              <i class="bi bi-person-x"></i>
+                            </button>
+                          {% else %}
+                            <button type="submit" class="btn btn-sm btn-outline-success py-1 px-2" title="Activate User">
+                              <i class="bi bi-person-check"></i>
+                            </button>
+                          {% endif %}
+                        </form>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="p-3 border-top">
+          {% include 'components/pagination.html' %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="bi bi-people"></i>
+          </div>
+          <h5 class="fw-bold text-dark">No Users Found</h5>
+          <p class="text-muted small mb-0">No team members match the search query.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

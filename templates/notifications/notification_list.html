@@ -1,0 +1,106 @@
+{% extends 'base_app.html' %}
+
+{% block title %}Notifications & Alerts — StockFlow{% endblock %}
+{% block page_title %}Alerts & Notifications{% endblock %}
+{% block page_subtitle %}Automated system notices, low stock warnings, and depletion alerts{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0" style="max-width: 960px;">
+  <!-- Header with Mark All as Read Button -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <h2 class="h4 fw-bold text-dark mb-1">Notification Center</h2>
+      <p class="text-muted small mb-0">
+        You have <strong class="text-danger">{{ unread_count }}</strong> unread alert{{ unread_count|pluralize }}.
+      </p>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      {% if unread_count > 0 %}
+        <form method="post" action="{% url 'mark_all_notifications_read' %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+            <i class="bi bi-check2-all"></i> Mark All as Read
+          </button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- State Filter Buttons -->
+  <div class="d-flex gap-2 mb-3">
+    <a href="{% url 'notification_list' %}" class="btn btn-sm {% if not filter_state %}btn-dark{% else %}btn-outline-secondary{% endif %}">
+      All ({{ total_count }})
+    </a>
+    <a href="{% url 'notification_list' %}?state=unread" class="btn btn-sm {% if filter_state == 'unread' %}btn-dark{% else %}btn-outline-secondary{% endif %}">
+      Unread Only ({{ unread_count }})
+    </a>
+    <a href="{% url 'notification_list' %}?state=read" class="btn btn-sm {% if filter_state == 'read' %}btn-dark{% else %}btn-outline-secondary{% endif %}">
+      Read
+    </a>
+  </div>
+
+  <!-- Notifications List Card -->
+  <div class="card card-sf">
+    <div class="card-body p-0">
+      {% if notifications %}
+        <div class="list-group list-group-flush">
+          {% for notif in notifications %}
+            <div id="notif-item-{{ notif.id }}" class="list-group-item p-3 p-md-4 border-bottom {% if not notif.is_read %}bg-light border-start border-primary border-3{% else %}opacity-75{% endif %}">
+              <div class="d-flex align-items-start justify-content-between gap-3">
+                <div class="d-flex align-items-start gap-3">
+                  <div class="fs-4 mt-1">
+                    <i class="bi {{ notif.icon_class }}"></i>
+                  </div>
+                  <div>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                      <h6 class="fw-bold text-dark mb-0">{{ notif.title }}</h6>
+                      <span class="badge {{ notif.badge_class }} small">{{ notif.get_type_display }}</span>
+                    </div>
+                    <p class="text-secondary small mb-2" style="line-height: 1.5;">
+                      {{ notif.message }}
+                    </p>
+                    <div class="d-flex align-items-center gap-3 text-muted" style="font-size: 0.785rem;">
+                      <span><i class="bi bi-clock me-1"></i> {{ notif.created_at|timesince }} ago ({{ notif.created_at|date:"M d, Y H:i" }})</span>
+                      {% if notif.product %}
+                        <a href="{% url 'product_detail' pk=notif.product.pk %}" class="text-decoration-none text-primary fw-medium">
+                          <i class="bi bi-box-arrow-up-right me-1"></i> View Product
+                        </a>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  {% if not notif.is_read %}
+                    <form method="post" action="{% url 'mark_notification_read' pk=notif.pk %}" class="d-inline">
+                      {% csrf_token %}
+                      <button type="button" class="btn btn-sm btn-outline-secondary btn-mark-read-async" data-notif-id="{{ notif.id }}" title="Mark Read">
+                        <i class="bi bi-check2"></i> Mark Read
+                      </button>
+                    </form>
+                  {% else %}
+                    <span class="text-muted small"><i class="bi bi-check2-circle"></i> Read</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <div class="p-3 border-top">
+          {% include 'components/pagination.html' %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="bi bi-bell-slash"></i>
+          </div>
+          <h5 class="fw-bold text-dark">You're All Caught Up!</h5>
+          <p class="text-muted small mb-0">No alerts or notifications match your current selection.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

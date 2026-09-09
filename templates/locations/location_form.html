@@ -1,0 +1,102 @@
+{% extends 'base_app.html' %}
+
+{% block title %}{{ title }} — StockFlow{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block page_subtitle %}Define a physical inventory storage area, store branch, shelf, or warehouse zone{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0" style="max-width: 760px;">
+  <div class="d-flex align-items-center gap-2 mb-4">
+    <a href="{% url 'location_list' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Back to Locations
+    </a>
+  </div>
+
+  <div class="card card-sf">
+    <div class="card-header bg-white py-3 px-4 border-bottom">
+      <h5 class="fw-bold mb-0 text-dark">{{ title }}</h5>
+      <small class="text-muted">Enter location identification and classification attributes</small>
+    </div>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="card-body p-4">
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger py-2 mb-3">
+            {% for error in form.non_field_errors %}
+              <div>{{ error }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-8">
+            <label for="{{ form.name.id_for_label }}" class="form-label fw-semibold">
+              Location Name <span class="text-danger">*</span>
+            </label>
+            {{ form.name }}
+            {% if form.name.errors %}
+              <div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>
+            {% endif %}
+            <div class="form-text small">e.g., Main Supermarket Floor, Central Cold Room, Aisle 4B</div>
+          </div>
+
+          <div class="col-md-4">
+            <label for="{{ form.code.id_for_label }}" class="form-label fw-semibold">
+              Location Code <span class="text-danger">*</span>
+            </label>
+            {{ form.code }}
+            {% if form.code.errors %}
+              <div class="text-danger small mt-1">{{ form.code.errors.0 }}</div>
+            {% endif %}
+            <div class="form-text small">Unique code (e.g. LOC-FLOOR-01)</div>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label for="{{ form.location_type.id_for_label }}" class="form-label fw-semibold">
+              Location Type <span class="text-danger">*</span>
+            </label>
+            {{ form.location_type }}
+            {% if form.location_type.errors %}
+              <div class="text-danger small mt-1">{{ form.location_type.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="col-md-6 d-flex align-items-center pt-4">
+            <div class="form-check form-switch mt-2">
+              {{ form.is_active }}
+              <label class="form-check-label fw-semibold ms-2" for="{{ form.is_active.id_for_label }}">
+                Active for Inventory Operations
+              </label>
+            </div>
+            {% if form.is_active.errors %}
+              <div class="text-danger small mt-1">{{ form.is_active.errors.0 }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.description.id_for_label }}" class="form-label fw-semibold">
+            Description & Notes (Optional)
+          </label>
+          {{ form.description }}
+          {% if form.description.errors %}
+            <div class="text-danger small mt-1">{{ form.description.errors.0 }}</div>
+          {% endif %}
+          <div class="form-text small">Physical room details, access restrictions, or notes.</div>
+        </div>
+      </div>
+
+      <div class="card-footer bg-light p-3 px-4 border-top d-flex justify-content-between align-items-center">
+        <a href="{% url 'location_list' %}" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-sf-primary px-4 fw-semibold">
+          <i class="bi bi-check2 me-1"></i> {% if is_create %}Create Location{% else %}Save Changes{% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

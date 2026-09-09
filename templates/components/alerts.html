@@ -1,0 +1,21 @@
+{% if messages %}
+  <div class="container-fluid px-3 px-md-4 pt-3">
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show d-flex align-items-center gap-2 shadow-sm border" role="alert">
+        {% if message.tags == 'success' %}
+          <i class="bi bi-check-circle-fill fs-5 text-success"></i>
+        {% elif message.tags == 'danger' %}
+          <i class="bi bi-exclamation-octagon-fill fs-5 text-danger"></i>
+        {% elif message.tags == 'warning' %}
+          <i class="bi bi-exclamation-triangle-fill fs-5 text-warning"></i>
+        {% else %}
+          <i class="bi bi-info-circle-fill fs-5 text-primary"></i>
+        {% endif %}
+        <div class="flex-grow-1">
+          {{ message }}
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}

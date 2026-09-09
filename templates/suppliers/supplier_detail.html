@@ -1,0 +1,121 @@
+{% extends 'base_app.html' %}
+{% load humanize %}
+
+{% block title %}{{ supplier.name }} — StockFlow{% endblock %}
+{% block page_title %}{{ supplier.name }}{% endblock %}
+{% block page_subtitle %}Supplier Profile & Supplied Catalog Items{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <!-- Top Action Bar -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <a href="{% url 'supplier_list' %}" class="btn btn-outline-secondary btn-sm">
+      &larr; Back to Suppliers
+    </a>
+
+    {% if is_manager %}
+      <div class="d-flex align-items-center gap-2">
+        <a href="{% url 'supplier_edit' pk=supplier.pk %}" class="btn btn-sf-primary btn-sm d-flex align-items-center gap-1">
+          <i class="bi bi-pencil"></i> Edit Supplier
+        </a>
+        <a href="{% url 'supplier_delete' pk=supplier.pk %}" class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1">
+          <i class="bi bi-trash"></i> Delete
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Profile Card -->
+  <div class="card card-sf mb-4">
+    <div class="card-body p-4">
+      <div class="row g-4 align-items-center">
+        <div class="col-md-8">
+          <h3 class="fw-bold text-dark mb-1">{{ supplier.name }}</h3>
+          <div class="text-muted mb-3"><i class="bi bi-geo-alt me-1"></i> {{ supplier.address|default:"No physical address provided" }}</div>
+
+          <div class="d-flex flex-wrap gap-4 text-dark small">
+            <div>
+              <span class="text-muted d-block">Phone Contact</span>
+              <strong class="font-monospace fs-6">{{ supplier.phone }}</strong>
+            </div>
+            <div>
+              <span class="text-muted d-block">Email Address</span>
+              <strong>{{ supplier.email|default:"—" }}</strong>
+            </div>
+            <div>
+              <span class="text-muted d-block">Supplied Products</span>
+              <strong>{{ products.count }} catalog item{{ products.count|pluralize }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4 text-md-end">
+          <div class="p-3 bg-light rounded-3 border text-center text-md-end">
+            <small class="text-muted d-block">Relationship Established</small>
+            <strong class="text-dark">{{ supplier.created_at|date:"F d, Y" }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Associated Products Card -->
+  <div class="card card-sf">
+    <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+      <h5 class="fw-bold mb-0 text-dark">Catalog Items from this Supplier</h5>
+      {% if is_manager %}
+        <a href="{% url 'product_create' %}" class="btn btn-sm btn-outline-secondary">Add New Product</a>
+      {% endif %}
+    </div>
+
+    <div class="card-body p-0">
+      {% if products %}
+        <div class="table-responsive">
+          <table class="table table-sf mb-0">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>SKU</th>
+                <th>Category</th>
+                <th class="text-end">Unit Price</th>
+                <th class="text-center">Stock Count</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in products %}
+                <tr>
+                  <td>
+                    <a href="{% url 'product_detail' pk=p.pk %}" class="fw-bold text-dark text-decoration-none">
+                      {{ p.name }}
+                    </a>
+                  </td>
+                  <td class="font-monospace small text-muted">{{ p.sku }}</td>
+                  <td><span class="badge bg-light text-dark border">{{ p.category.name|default:"—" }}</span></td>
+                  <td class="text-end fw-semibold">KES {{ p.price|floatformat:2|intcomma }}</td>
+                  <td class="text-center fw-bold">{{ p.quantity }}</td>
+                  <td><span class="{{ p.status_badge_class }}">{{ p.stock_status_display }}</span></td>
+                  <td class="text-end">
+                    <a href="{% url 'product_detail' pk=p.pk %}" class="btn btn-sm btn-outline-secondary py-1 px-2">
+                      <i class="bi bi-eye"></i> View
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="bi bi-box-seam"></i>
+          </div>
+          <h6 class="fw-bold text-dark">No Products Linked Yet</h6>
+          <p class="text-muted small mb-0">Assign this supplier when creating or editing inventory items.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

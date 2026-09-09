@@ -1,0 +1,110 @@
+{% extends 'base_app.html' %}
+
+{% block title %}Record Stock Movement — StockFlow{% endblock %}
+{% block page_title %}Record Stock Movement{% endblock %}
+{% block page_subtitle %}Execute an authoritative inventory addition, dispatch, or audit adjustment{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0" style="max-width: 680px;">
+  <div class="card card-sf">
+    <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+      <h5 class="fw-bold mb-0 text-dark">New Stock Movement Transaction</h5>
+      <a href="{% url 'stock_movements' %}" class="btn btn-sm btn-outline-secondary">
+        &larr; Back to Ledger
+      </a>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="card-body p-4">
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger py-2 small mb-3">
+            {% for err in form.non_field_errors %}
+              <div>{{ err }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="mb-3">
+          <label for="{{ form.product.id_for_label }}" class="form-label fw-semibold">Target Product <span class="text-danger">*</span></label>
+          {{ form.product }}
+          {% if form.product.errors %}
+            <div class="text-danger small mt-1">{{ form.product.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label for="{{ form.movement_type.id_for_label }}" class="form-label fw-semibold">Movement Type <span class="text-danger">*</span></label>
+            {{ form.movement_type }}
+            {% if form.movement_type.errors %}
+              <div class="text-danger small mt-1">{{ form.movement_type.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="col-md-6">
+            <label for="{{ form.quantity.id_for_label }}" class="form-label fw-semibold">
+              <span id="qty-label">Operation Quantity</span> <span class="text-danger">*</span>
+            </label>
+            {{ form.quantity }}
+            {% if form.quantity.errors %}
+              <div class="text-danger small mt-1">{{ form.quantity.errors.0 }}</div>
+            {% endif %}
+            <div class="form-text" id="qty-help">Units to add or remove (or new count for adjustment).</div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.reason.id_for_label }}" class="form-label fw-semibold">Operational Reason <span class="text-danger">*</span></label>
+          {{ form.reason }}
+          {% if form.reason.errors %}
+            <div class="text-danger small mt-1">{{ form.reason.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="mb-3">
+          <label for="{{ form.reference.id_for_label }}" class="form-label fw-semibold">Reference Document / Receipt / PO #</label>
+          {{ form.reference }}
+          {% if form.reference.errors %}
+            <div class="text-danger small mt-1">{{ form.reference.errors.0 }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card-footer bg-light p-3 px-4 border-top d-flex justify-content-end gap-2">
+        <a href="{% url 'stock_movements' %}" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-sf-primary px-4 fw-semibold">
+          Commit Movement to Ledger
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const typeSelect = document.getElementById('id_movement_type');
+  const qtyLabel = document.getElementById('qty-label');
+  const qtyHelp = document.getElementById('qty-help');
+
+  function updateLabels() {
+    if (!typeSelect) return;
+    if (typeSelect.value === 'ADJUSTMENT') {
+      qtyLabel.textContent = 'Actual Physical Stock Count';
+      qtyHelp.textContent = 'Target inventory count physically counted.';
+    } else if (typeSelect.value === 'OUT') {
+      qtyLabel.textContent = 'Quantity to Dispatch';
+      qtyHelp.textContent = 'Units removed. Cannot exceed current in-stock count.';
+    } else {
+      qtyLabel.textContent = 'Quantity to Restock';
+      qtyHelp.textContent = 'Units added to inventory.';
+    }
+  }
+
+  if (typeSelect) {
+    typeSelect.addEventListener('change', updateLabels);
+    updateLabels();
+  }
+</script>
+{% endblock %}

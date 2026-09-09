@@ -1,0 +1,147 @@
+{% extends 'base_app.html' %}
+
+{% block title %}Inventory Locations — StockFlow{% endblock %}
+{% block page_title %}Inventory Locations{% endblock %}
+{% block page_subtitle %}Manage physical stores, warehouses, cold storage, aisles, and staging areas{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <!-- Top Bar with Search and Add -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <h2 class="h4 fw-bold text-dark mb-1">Physical Stock Locations</h2>
+      <p class="text-muted small mb-0">{{ active_count }} active out of {{ total_count }} total inventory locations configured.</p>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <a href="{% url 'transfer_list' %}" class="btn btn-outline-secondary d-flex align-items-center gap-2">
+        <i class="bi bi-arrow-left-right"></i> View Stock Transfers
+      </a>
+      {% if is_manager %}
+        <a href="{% url 'location_create' %}" class="btn btn-sf-primary d-flex align-items-center gap-2">
+          <i class="bi bi-plus-lg"></i> Add New Location
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Filter & Search Card -->
+  <div class="card card-sf mb-4">
+    <div class="card-body p-3">
+      <form method="get" action="{% url 'location_list' %}" class="row g-2 align-items-center">
+        <div class="col-md-7">
+          <div class="input-group">
+            <span class="input-group-text bg-white text-muted border-end-0"><i class="bi bi-search"></i></span>
+            <input type="text" name="q" value="{{ query }}" class="form-control border-start-0" placeholder="Search by name, code, or description...">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <select name="type" class="form-select">
+            <option value="">All Location Types</option>
+            {% for code, label in location_types %}
+              <option value="{{ code }}" {% if selected_type == code %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+          <button type="submit" class="btn btn-sf-slate w-100">Filter</button>
+          {% if query or selected_type %}
+            <a href="{% url 'location_list' %}" class="btn btn-outline-secondary" title="Clear filter">
+              <i class="bi bi-x-circle"></i>
+            </a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Locations Grid -->
+  {% if locations %}
+    <div class="row g-3 mb-4">
+      {% for loc in locations %}
+        <div class="col-md-6 col-xl-4">
+          <div class="card card-sf h-100 hover-shadow transition">
+            <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-start">
+              <div>
+                <span class="badge {{ loc.type_badge_class }} mb-1">{{ loc.get_location_type_display }}</span>
+                <h5 class="fw-bold text-dark mb-0">
+                  <a href="{% url 'location_detail' pk=loc.pk %}" class="text-dark text-decoration-none">
+                    {{ loc.name }}
+                  </a>
+                </h5>
+                <span class="font-monospace text-muted small">Code: {{ loc.code }}</span>
+              </div>
+              {% if loc.is_active %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">Active</span>
+              {% else %}
+                <span class="badge bg-secondary-subtle text-secondary border rounded-pill">Inactive</span>
+              {% endif %}
+            </div>
+
+            <div class="card-body p-4">
+              {% if loc.description %}
+                <p class="text-muted small mb-3">{{ loc.description|truncatewords:20 }}</p>
+              {% else %}
+                <p class="text-muted small fst-italic mb-3">No description provided for this location.</p>
+              {% endif %}
+
+              <div class="row g-2 pt-2 border-top">
+                <div class="col-6">
+                  <div class="p-2 rounded-3 bg-light border text-center">
+                    <small class="text-muted d-block" style="font-size: 0.725rem;">STOCK ITEMS</small>
+                    <span class="fw-bold text-dark fs-6">{{ loc.stock_count }}</span>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="p-2 rounded-3 bg-light border text-center">
+                    <small class="text-muted d-block" style="font-size: 0.725rem;">TOTAL UNITS</small>
+                    <span class="fw-bold text-primary fs-6">{{ loc.total_quantity }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-footer bg-white py-3 px-4 border-top d-flex justify-content-between align-items-center">
+              <a href="{% url 'location_detail' pk=loc.pk %}" class="btn btn-sm btn-outline-primary fw-medium">
+                <i class="bi bi-eye me-1"></i> View Stock
+              </a>
+
+              {% if is_manager %}
+                <div class="btn-group btn-group-sm">
+                  <a href="{% url 'transfer_create' %}?from={{ loc.pk }}" class="btn btn-outline-secondary" title="Transfer Stock Out">
+                    <i class="bi bi-box-arrow-right"></i>
+                  </a>
+                  <a href="{% url 'location_edit' pk=loc.pk %}" class="btn btn-outline-secondary" title="Edit Location">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <a href="{% url 'location_delete' pk=loc.pk %}" class="btn btn-outline-danger" title="Delete Location">
+                    <i class="bi bi-trash"></i>
+                  </a>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% include 'components/pagination.html' %}
+  {% else %}
+    <div class="card card-sf">
+      <div class="card-body p-5 text-center">
+        <div class="empty-state-icon mx-auto mb-3">
+          <i class="bi bi-geo-alt text-muted fs-1"></i>
+        </div>
+        <h5 class="fw-bold text-dark">No Inventory Locations Found</h5>
+        <p class="text-muted small mb-4">No locations match your current search or filter criteria.</p>
+        {% if is_manager %}
+          <a href="{% url 'location_create' %}" class="btn btn-sf-primary">
+            <i class="bi bi-plus-lg me-1"></i> Create First Location
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,318 @@
+{% extends 'base_app.html' %}
+{% load humanize %}
+
+{% block title %}Executive Dashboard — StockFlow{% endblock %}
+{% block page_title %}Dashboard Overview{% endblock %}
+{% block page_subtitle %}Real-time inventory intelligence, health, and operational activity{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <!-- Top Quick Actions Bar -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <h2 class="h4 fw-bold text-dark mb-1">Operational Pulse</h2>
+      <p class="text-muted small mb-0">Live data calculated authoritative from the stock database.</p>
+    </div>
+    
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <a href="{% url 'stock_movement_create' %}" class="btn btn-outline-dark btn-sm fw-medium d-flex align-items-center gap-2">
+        <i class="bi bi-arrow-left-right"></i> Record Movement
+      </a>
+      {% if is_manager %}
+        <a href="{% url 'supplier_create' %}" class="btn btn-outline-secondary btn-sm fw-medium d-flex align-items-center gap-1">
+          <i class="bi bi-truck"></i> Add Supplier
+        </a>
+        <a href="{% url 'product_create' %}" class="btn btn-sf-primary btn-sm fw-medium d-flex align-items-center gap-1">
+          <i class="bi bi-plus-lg"></i> Add Product
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- KPI Summary Cards Grid -->
+  <div class="row g-3 mb-4">
+    <!-- Total Products -->
+    <div class="col-sm-6 col-xl-2">
+      <div class="kpi-card h-100">
+        <div>
+          <div class="kpi-title">Catalog Items</div>
+          <div class="kpi-value">{{ total_products }}</div>
+          <div class="kpi-subtitle text-muted">Across {{ categories_count }} categories</div>
+        </div>
+        <div class="kpi-icon-box kpi-icon-products">
+          <i class="bi bi-box-seam"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total In-Stock Units -->
+    <div class="col-sm-6 col-xl-2">
+      <div class="kpi-card h-100">
+        <div>
+          <div class="kpi-title">Total Units</div>
+          <div class="kpi-value">{{ total_stock|intcomma }}</div>
+          <div class="kpi-subtitle text-success"><i class="bi bi-check-circle me-1"></i>In warehouse & shelves</div>
+        </div>
+        <div class="kpi-icon-box kpi-icon-stock">
+          <i class="bi bi-stack"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Low Stock Items -->
+    <div class="col-sm-6 col-xl-2">
+      <div class="kpi-card h-100">
+        <div>
+          <div class="kpi-title">Low Stock</div>
+          <div class="kpi-value text-warning">{{ low_stock_count }}</div>
+          <div class="kpi-subtitle text-warning-emphasis">Below safety limit</div>
+        </div>
+        <div class="kpi-icon-box kpi-icon-low">
+          <i class="bi bi-exclamation-triangle"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Out of Stock Items -->
+    <div class="col-sm-6 col-xl-2">
+      <div class="kpi-card h-100">
+        <div>
+          <div class="kpi-title">Out of Stock</div>
+          <div class="kpi-value text-danger">{{ out_of_stock_count }}</div>
+          <div class="kpi-subtitle text-danger-emphasis">Depleted (0 units)</div>
+        </div>
+        <div class="kpi-icon-box kpi-icon-out">
+          <i class="bi bi-x-octagon"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inventory Valuation -->
+    <div class="col-sm-12 col-xl-4">
+      <div class="kpi-card h-100 bg-white" style="border-left: 4px solid #10b981;">
+        <div>
+          <div class="kpi-title">Estimated Stock Valuation</div>
+          <div class="kpi-value text-dark">KES {{ inventory_value|floatformat:2|intcomma }}</div>
+          <div class="kpi-subtitle text-muted">Retail asset value across all items</div>
+        </div>
+        <div class="kpi-icon-box kpi-icon-value">
+          <i class="bi bi-cash-stack"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inventory Health Distribution Visual Section -->
+  <div class="card card-sf mb-4">
+    <div class="card-body p-4">
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
+        <div>
+          <h5 class="fw-bold mb-1">Inventory Health Distribution</h5>
+          <p class="text-muted small mb-0">Authoritative proportion of products across stock safety thresholds.</p>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+          <span class="badge bg-light text-dark border">
+            {{ in_stock_count }} Healthy / {{ total_products }} Total Items
+          </span>
+        </div>
+      </div>
+
+      <!-- Segmented Bar -->
+      <div class="health-distribution-bar" id="inventoryHealthBar">
+        <div class="health-seg-in" data-pct="{{ in_stock_pct }}" title="In Stock: {{ in_stock_pct }}%"></div>
+        <div class="health-seg-low" data-pct="{{ low_stock_pct }}" title="Low Stock: {{ low_stock_pct }}%"></div>
+        <div class="health-seg-out" data-pct="{{ out_of_stock_pct }}" title="Out of Stock: {{ out_of_stock_pct }}%"></div>
+      </div>
+      <script>
+        (function() {
+          var bar = document.getElementById('inventoryHealthBar');
+          if (bar) {
+            var segments = bar.children;
+            for (var i = 0; i < segments.length; i++) {
+              var pct = segments[i].getAttribute('data-pct') || '0';
+              segments[i].style.width = pct + '%';
+            }
+          }
+        })();
+      </script>
+
+      <!-- Health Legend -->
+      <div class="row g-3">
+        <div class="col-sm-4">
+          <div class="p-2 px-3 rounded-3 bg-light border d-flex justify-content-between align-items-center">
+            <div class="health-legend-item">
+              <span class="health-dot health-dot-in"></span>
+              <span>In Stock (&gt; Minimum)</span>
+            </div>
+            <div class="fw-bold text-success">{{ in_stock_count }} ({{ in_stock_pct }}%)</div>
+          </div>
+        </div>
+
+        <div class="col-sm-4">
+          <div class="p-2 px-3 rounded-3 bg-light border d-flex justify-content-between align-items-center">
+            <div class="health-legend-item">
+              <span class="health-dot health-dot-low"></span>
+              <span>Low Stock (&le; Minimum)</span>
+            </div>
+            <div class="fw-bold text-warning">{{ low_stock_count }} ({{ low_stock_pct }}%)</div>
+          </div>
+        </div>
+
+        <div class="col-sm-4">
+          <div class="p-2 px-3 rounded-3 bg-light border d-flex justify-content-between align-items-center">
+            <div class="health-legend-item">
+              <span class="health-dot health-dot-out"></span>
+              <span>Out of Stock (0 Units)</span>
+            </div>
+            <div class="fw-bold text-danger">{{ out_of_stock_count }} ({{ out_of_stock_pct }}%)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attention Required & Recent Activity Split Grid -->
+  <div class="row g-4">
+    <!-- Attention Required Table -->
+    <div class="col-lg-6">
+      <div class="card card-sf h-100">
+        <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="fw-bold mb-0 text-dark">
+              <i class="bi bi-exclamation-circle-fill text-warning me-2"></i>Attention Required
+            </h5>
+            <small class="text-muted">Items at risk or depleted requiring immediate reordering</small>
+          </div>
+          <a href="{% url 'product_list' %}?status=LOW_STOCK" class="btn btn-sm btn-outline-secondary">View All</a>
+        </div>
+
+        <div class="card-body p-0">
+          {% if attention_products %}
+            <div class="table-responsive">
+              <table class="table table-sf mb-0">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Current</th>
+                    <th>Min</th>
+                    <th>Status</th>
+                    <th class="text-end">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for p in attention_products %}
+                    <tr>
+                      <td>
+                        <a href="{% url 'product_detail' pk=p.pk %}" class="fw-semibold text-dark text-decoration-none d-block">
+                          {{ p.name }}
+                        </a>
+                        <span class="font-monospace text-muted small">{{ p.sku }}</span>
+                      </td>
+                      <td>
+                        <span class="fw-bold {% if p.quantity == 0 %}text-danger{% else %}text-warning{% endif %}">
+                          {{ p.quantity }}
+                        </span>
+                      </td>
+                      <td class="text-muted small">{{ p.minimum_stock }}</td>
+                      <td>
+                        <span class="{{ p.status_badge_class }}">{{ p.stock_status_display }}</span>
+                      </td>
+                      <td class="text-end">
+                        <button type="button" class="btn btn-sm btn-outline-success py-1 px-2"
+                                data-bs-toggle="modal" data-bs-target="#quickStockModal"
+                                data-product-id="{{ p.id }}"
+                                data-product-name="{{ p.name }}"
+                                data-product-sku="{{ p.sku }}"
+                                data-product-stock="{{ p.quantity }}"
+                                data-action-type="in"
+                                title="Restock item">
+                          <i class="bi bi-plus-lg"></i> Restock
+                        </button>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="empty-state">
+              <div class="empty-state-icon text-success bg-success-subtle">
+                <i class="bi bi-check2-circle"></i>
+              </div>
+              <h6 class="fw-bold text-dark">Inventory in Excellent Health</h6>
+              <p class="text-muted small mb-0">All catalog items have stock counts safely above their minimum thresholds.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Stock Movements Audit Ledger -->
+    <div class="col-lg-6">
+      <div class="card card-sf h-100">
+        <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="fw-bold mb-0 text-dark">
+              <i class="bi bi-clock-history text-primary me-2"></i>Recent Stock Activity
+            </h5>
+            <small class="text-muted">Live audit stream of incoming and outgoing inventory</small>
+          </div>
+          <a href="{% url 'stock_movements' %}" class="btn btn-sm btn-outline-secondary">Full Audit Log</a>
+        </div>
+
+        <div class="card-body p-0">
+          {% if recent_movements %}
+            <div class="table-responsive">
+              <table class="table table-sf mb-0">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Type</th>
+                    <th>Qty</th>
+                    <th>User</th>
+                    <th>Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for m in recent_movements %}
+                    <tr>
+                      <td>
+                        <a href="{% url 'product_detail' pk=m.product.pk %}" class="fw-semibold text-dark text-decoration-none">
+                          {{ m.product.name }}
+                        </a>
+                        <div class="text-muted small text-truncate" style="max-width: 160px;">{{ m.reason }}</div>
+                      </td>
+                      <td>
+                        <span class="{{ m.badge_class }}">{{ m.get_type_display }}</span>
+                      </td>
+                      <td>
+                        <span class="fw-bold {% if m.type == 'OUT' %}text-danger{% elif m.type == 'IN' %}text-success{% else %}text-primary{% endif %}">
+                          {% if m.type == 'OUT' %}-{% elif m.type == 'IN' %}+{% endif %}{{ m.quantity }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="small text-muted">{{ m.user.username|default:"System" }}</span>
+                      </td>
+                      <td class="small text-muted">
+                        {{ m.created_at|timesince }} ago
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="empty-state">
+              <div class="empty-state-icon">
+                <i class="bi bi-arrow-left-right"></i>
+              </div>
+              <h6 class="fw-bold text-dark">No Stock Activity Yet</h6>
+              <p class="text-muted small mb-0">Stock movements recorded will appear here in real time.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

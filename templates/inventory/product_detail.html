@@ -1,0 +1,273 @@
+{% extends 'base_app.html' %}
+{% load humanize %}
+
+{% block title %}{{ product.name }} ({{ product.sku }}) — StockFlow{% endblock %}
+{% block page_title %}Product Details{% endblock %}
+{% block page_subtitle %}{{ product.sku }} &bull; {{ product.category.name|default:"Uncategorized" }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <!-- Top Navigation & Edit Buttons -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <a href="{% url 'product_list' %}" class="btn btn-outline-secondary btn-sm">
+      &larr; Back to Catalog
+    </a>
+
+    <div class="d-flex align-items-center gap-2">
+      {% if is_manager %}
+        <a href="{% url 'product_edit' pk=product.pk %}" class="btn btn-sf-primary btn-sm d-flex align-items-center gap-1">
+          <i class="bi bi-pencil"></i> Edit Product
+        </a>
+        <a href="{% url 'product_delete' pk=product.pk %}" class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1">
+          <i class="bi bi-trash"></i> Delete
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <!-- Main Product Specs Card -->
+    <div class="col-lg-7">
+      <div class="card card-sf h-100">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+              <span class="badge bg-light text-dark border mb-2">{{ product.category.name|default:"Uncategorized" }}</span>
+              <h2 class="h3 fw-bold text-dark mb-1">{{ product.name }}</h2>
+              <div class="font-monospace text-muted small">SKU: {{ product.sku }}</div>
+            </div>
+            <span class="{{ product.status_badge_class }} fs-6">{{ product.stock_status_display }}</span>
+          </div>
+
+          <p class="text-muted mb-4" style="line-height: 1.6;">
+            {{ product.description|default:"No description recorded for this item." }}
+          </p>
+
+          <!-- Specifications Grid -->
+          <div class="row g-3 py-3 border-top border-bottom mb-4">
+            <div class="col-sm-6 col-md-3">
+              <small class="text-muted text-uppercase fw-semibold d-block">Unit Price</small>
+              <span class="fs-5 fw-bold text-dark">KES {{ product.price|floatformat:2|intcomma }}</span>
+            </div>
+
+            <div class="col-sm-6 col-md-3">
+              <small class="text-muted text-uppercase fw-semibold d-block">In Stock Units</small>
+              <span class="fs-5 fw-bold {% if product.quantity == 0 %}text-danger{% elif product.quantity <= product.minimum_stock %}text-warning{% else %}text-success{% endif %}">
+                {{ product.quantity }} units
+              </span>
+            </div>
+
+            <div class="col-sm-6 col-md-3">
+              <small class="text-muted text-uppercase fw-semibold d-block">Min Threshold</small>
+              <span class="fs-5 fw-bold text-dark">{{ product.minimum_stock }} units</span>
+            </div>
+
+            <div class="col-sm-6 col-md-3">
+              <small class="text-muted text-uppercase fw-semibold d-block">Total Asset Value</small>
+              <span class="fs-5 fw-bold text-dark">KES {{ product.total_value|floatformat:2|intcomma }}</span>
+            </div>
+          </div>
+
+          <!-- Capacity Stock Gauge -->
+          <div class="mb-4">
+            <div class="d-flex justify-content-between small text-muted mb-1">
+              <span>Stock Level vs Maximum Capacity ({{ product.maximum_stock }} max)</span>
+              <span class="fw-semibold text-dark">{{ product.stock_percentage }}% full</span>
+            </div>
+            <div class="stock-gauge-bg">
+              <div class="stock-gauge-fill bg-{{ product.status_bootstrap_color }}" id="productStockGauge" data-pct="{{ product.stock_percentage }}"></div>
+            </div>
+            <script>
+              (function() {
+                var gauge = document.getElementById('productStockGauge');
+                if (gauge) {
+                  gauge.style.width = (gauge.getAttribute('data-pct') || '0') + '%';
+                }
+              })();
+            </script>
+          </div>
+
+          <!-- Metadata -->
+          <div class="row g-2 text-muted small">
+            <div class="col-sm-6">
+              <i class="bi bi-truck me-1"></i> Supplier: <strong>{{ product.supplier.name|default:"Not specified" }}</strong>
+            </div>
+            <div class="col-sm-6">
+              <i class="bi bi-clock me-1"></i> Updated: {{ product.updated_at|date:"M d, Y H:i" }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stock Operation Action Card -->
+    <div class="col-lg-5">
+      <div class="card card-sf h-100">
+        <div class="card-header bg-white py-3 px-4 border-bottom">
+          <h5 class="fw-bold mb-0 text-dark">Stock Operations</h5>
+          <small class="text-muted">Record transactional inventory changes with audit logging</small>
+        </div>
+
+        <div class="card-body p-4">
+          <!-- Nav Tabs for Operations -->
+          <ul class="nav nav-pills nav-fill mb-3" id="operationTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active fw-medium py-2" id="stockin-tab" data-bs-toggle="tab" data-bs-target="#stockin-pane" type="button" role="tab">
+                <i class="bi bi-arrow-down-left me-1"></i> Stock IN
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link fw-medium py-2" id="stockout-tab" data-bs-toggle="tab" data-bs-target="#stockout-pane" type="button" role="tab">
+                <i class="bi bi-arrow-up-right me-1"></i> Stock OUT
+              </button>
+            </li>
+            {% if is_manager %}
+              <li class="nav-item" role="presentation">
+                <button class="nav-link fw-medium py-2" id="adjust-tab" data-bs-toggle="tab" data-bs-target="#adjust-pane" type="button" role="tab">
+                  <i class="bi bi-sliders me-1"></i> Adjust
+                </button>
+              </li>
+            {% endif %}
+          </ul>
+
+          <div class="tab-content" id="operationTabsContent">
+            <!-- Stock IN Form -->
+            <div class="tab-pane fade show active" id="stockin-pane" role="tabpanel">
+              <form method="post" action="{% url 'stock_in' product_id=product.pk %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label class="form-label fw-semibold small">Quantity to Add <span class="text-danger">*</span></label>
+                  {{ stock_in_form.quantity }}
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold small">Reason</label>
+                  {{ stock_in_form.reason }}
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold small">Reference # (PO/Invoice)</label>
+                  {{ stock_in_form.reference }}
+                </div>
+                <div class="d-grid">
+                  <button type="submit" class="btn btn-success fw-semibold">
+                    <i class="bi bi-box-arrow-in-down me-1"></i> Add Stock Units
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Stock OUT Form -->
+            <div class="tab-pane fade" id="stockout-pane" role="tabpanel">
+              <form method="post" action="{% url 'stock_out' product_id=product.pk %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label class="form-label fw-semibold small">Quantity to Remove <span class="text-danger">*</span></label>
+                  {{ stock_out_form.quantity }}
+                  <div class="form-text">Available: {{ product.quantity }} units. Cannot exceed stock.</div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold small">Reason</label>
+                  {{ stock_out_form.reason }}
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold small">Reference # (Receipt/Ticket)</label>
+                  {{ stock_out_form.reference }}
+                </div>
+                <div class="d-grid">
+                  <button type="submit" class="btn btn-danger fw-semibold" {% if product.quantity == 0 %}disabled{% endif %}>
+                    <i class="bi bi-box-arrow-up me-1"></i> Dispatch Stock Units
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Stock Adjustment Form -->
+            {% if is_manager %}
+              <div class="tab-pane fade" id="adjust-pane" role="tabpanel">
+                <form method="post" action="{% url 'stock_adjust' product_id=product.pk %}">
+                  {% csrf_token %}
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold small">Actual Physical Count <span class="text-danger">*</span></label>
+                    {{ stock_adjust_form.new_quantity }}
+                    <div class="form-text">Previous recorded: {{ product.quantity }} units.</div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold small">Reason for Adjustment</label>
+                    {{ stock_adjust_form.reason }}
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold small">Audit Reference #</label>
+                    {{ stock_adjust_form.reference }}
+                  </div>
+                  <div class="d-grid">
+                    <button type="submit" class="btn btn-primary fw-semibold">
+                      <i class="bi bi-check-circle me-1"></i> Reconcile Physical Stock
+                    </button>
+                  </div>
+                </form>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Product Movements History -->
+  <div class="card card-sf">
+    <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="fw-bold mb-0 text-dark">Stock Movement History</h5>
+        <small class="text-muted">Audit log for this specific SKU</small>
+      </div>
+      <a href="{% url 'stock_movements' %}?product={{ product.pk }}" class="btn btn-sm btn-outline-secondary">
+        View Full Product Audit
+      </a>
+    </div>
+
+    <div class="card-body p-0">
+      {% if movements %}
+        <div class="table-responsive">
+          <table class="table table-sf mb-0">
+            <thead>
+              <tr>
+                <th>Date & Time</th>
+                <th>Operation</th>
+                <th>Quantity Changed</th>
+                <th>Previous &rarr; New</th>
+                <th>Reason</th>
+                <th>Reference</th>
+                <th>Operator</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for m in movements %}
+                <tr>
+                  <td class="small text-muted">{{ m.created_at|date:"M d, Y H:i" }}</td>
+                  <td><span class="{{ m.badge_class }}">{{ m.get_type_display }}</span></td>
+                  <td class="fw-bold {% if m.type == 'OUT' %}text-danger{% elif m.type == 'IN' %}text-success{% else %}text-primary{% endif %}">
+                    {% if m.type == 'OUT' %}-{% elif m.type == 'IN' %}+{% endif %}{{ m.quantity }}
+                  </td>
+                  <td class="small text-muted">
+                    {{ m.previous_quantity }} &rarr; <strong>{{ m.new_quantity }}</strong>
+                  </td>
+                  <td>{{ m.reason }}</td>
+                  <td class="font-monospace small text-muted">{{ m.reference|default:"—" }}</td>
+                  <td class="small">{{ m.user.username|default:"System" }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="bi bi-clock-history"></i>
+          </div>
+          <h6 class="fw-bold text-dark">No Movement History Recorded</h6>
+          <p class="text-muted small mb-0">Use the Stock Operations panel above to record the first movement.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

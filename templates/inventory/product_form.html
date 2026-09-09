@@ -1,0 +1,149 @@
+{% extends 'base_app.html' %}
+
+{% block title %}{{ title }} — StockFlow{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block page_subtitle %}{% if is_create %}Register a new product in the store catalog{% else %}Update existing catalog specifications{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0" style="max-width: 900px;">
+  <div class="card card-sf">
+    <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+      <h5 class="fw-bold mb-0 text-dark">{{ title }}</h5>
+      <a href="{% url 'product_list' %}" class="btn btn-sm btn-outline-secondary">
+        &larr; Back to Catalog
+      </a>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="card-body p-4">
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger py-2 small mb-4">
+            {% for err in form.non_field_errors %}
+              <div><i class="bi bi-exclamation-circle-fill me-1"></i> {{ err }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <!-- Basic Information Section -->
+        <h6 class="fw-bold text-dark text-uppercase small mb-3 border-bottom pb-2">Basic Information</h6>
+        
+        <div class="row g-3 mb-4">
+          <div class="col-md-8">
+            <label for="{{ form.name.id_for_label }}" class="form-label fw-semibold">
+              Product Title / Name <span class="text-danger">*</span>
+            </label>
+            {{ form.name }}
+            {% if form.name.errors %}
+              <div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="col-md-4">
+            <label for="{{ form.sku.id_for_label }}" class="form-label fw-semibold">
+              SKU Identifier Code <span class="text-danger">*</span>
+            </label>
+            {{ form.sku }}
+            {% if form.sku.errors %}
+              <div class="text-danger small mt-1">{{ form.sku.errors.0 }}</div>
+            {% endif %}
+            <div class="form-text">Unique barcode or stock keeping unit.</div>
+          </div>
+
+          <div class="col-12">
+            <label for="{{ form.description.id_for_label }}" class="form-label fw-semibold">Description</label>
+            {{ form.description }}
+            {% if form.description.errors %}
+              <div class="text-danger small mt-1">{{ form.description.errors.0 }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Catalog Classification & Supplier -->
+        <h6 class="fw-bold text-dark text-uppercase small mb-3 border-bottom pb-2">Classification & Source</h6>
+        
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label for="{{ form.category.id_for_label }}" class="form-label fw-semibold">Category</label>
+            {{ form.category }}
+            {% if form.category.errors %}
+              <div class="text-danger small mt-1">{{ form.category.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="col-md-6">
+            <label for="{{ form.supplier.id_for_label }}" class="form-label fw-semibold">Primary Supplier</label>
+            {{ form.supplier }}
+            {% if form.supplier.errors %}
+              <div class="text-danger small mt-1">{{ form.supplier.errors.0 }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Pricing & Stock Thresholds -->
+        <h6 class="fw-bold text-dark text-uppercase small mb-3 border-bottom pb-2">Pricing & Inventory Parameters</h6>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-3">
+            <label for="{{ form.price.id_for_label }}" class="form-label fw-semibold">
+              Selling Price (KES) <span class="text-danger">*</span>
+            </label>
+            {{ form.price }}
+            {% if form.price.errors %}
+              <div class="text-danger small mt-1">{{ form.price.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="col-md-3">
+            <label for="{{ form.quantity.id_for_label }}" class="form-label fw-semibold">
+              {% if is_create %}Opening Stock Units{% else %}In-Stock Units{% endif %} <span class="text-danger">*</span>
+            </label>
+            {{ form.quantity }}
+            {% if form.quantity.errors %}
+              <div class="text-danger small mt-1">{{ form.quantity.errors.0 }}</div>
+            {% endif %}
+            <div class="form-text">Current physical count.</div>
+          </div>
+
+          <div class="col-md-3">
+            <label for="{{ form.minimum_stock.id_for_label }}" class="form-label fw-semibold">
+              Minimum Threshold <span class="text-danger">*</span>
+            </label>
+            {{ form.minimum_stock }}
+            {% if form.minimum_stock.errors %}
+              <div class="text-danger small mt-1">{{ form.minimum_stock.errors.0 }}</div>
+            {% endif %}
+            <div class="form-text">Triggers low-stock alert.</div>
+          </div>
+
+          <div class="col-md-3">
+            <label for="{{ form.maximum_stock.id_for_label }}" class="form-label fw-semibold">
+              Maximum Capacity <span class="text-danger">*</span>
+            </label>
+            {{ form.maximum_stock }}
+            {% if form.maximum_stock.errors %}
+              <div class="text-danger small mt-1">{{ form.maximum_stock.errors.0 }}</div>
+            {% endif %}
+            <div class="form-text">Shelf/storage limit.</div>
+          </div>
+        </div>
+
+        <!-- Explanatory note -->
+        <div class="alert alert-info py-2 px-3 small border-info d-flex align-items-center gap-2">
+          <i class="bi bi-info-circle-fill text-info"></i>
+          <div>
+            <strong>Automated Stock Engine:</strong> If quantity drops to 0, status switches to <em>Out of Stock</em>. When quantity is &le; Minimum Threshold, status switches to <em>Low Stock</em> and triggers in-app alerts to managers.
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer bg-light p-3 px-4 border-top d-flex justify-content-end gap-2">
+        <a href="{% url 'product_list' %}" class="btn btn-outline-secondary px-3">Cancel</a>
+        <button type="submit" class="btn btn-sf-primary px-4 fw-semibold">
+          {% if is_create %}Save Product to Inventory{% else %}Update Product Specifications{% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

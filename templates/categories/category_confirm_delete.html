@@ -1,0 +1,37 @@
+{% extends 'base_app.html' %}
+
+{% block title %}Confirm Delete Category: {{ category.name }} — StockFlow{% endblock %}
+{% block page_title %}Delete Category{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0" style="max-width: 600px;">
+  <div class="card card-sf border-danger">
+    <div class="card-header bg-danger-subtle text-danger py-3 px-4 border-bottom border-danger-subtle d-flex align-items-center gap-2">
+      <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+      <h5 class="fw-bold mb-0">Confirm Category Deletion</h5>
+    </div>
+
+    <div class="card-body p-4">
+      <p class="text-dark">
+        Are you sure you want to delete the category <strong>"{{ category.name }}"</strong>?
+      </p>
+
+      {% if category.products.count > 0 %}
+        <div class="alert alert-warning py-3 px-3 small border-warning">
+          <strong><i class="bi bi-info-circle-fill me-1"></i> Associated Products Notice:</strong>
+          There are <strong>{{ category.products.count }} product(s)</strong> assigned to this category.
+          Deleting this category will not delete the products; they will become uncategorized.
+        </div>
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="d-flex justify-content-end gap-2 mt-4">
+          <a href="{% url 'category_list' %}" class="btn btn-outline-secondary px-4">Cancel</a>
+          <button type="submit" class="btn btn-danger px-4 fw-semibold">Delete Category</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

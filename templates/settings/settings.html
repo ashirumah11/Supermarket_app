@@ -1,0 +1,253 @@
+{% extends 'base_app.html' %}
+
+{% block title %}Account & System Settings — StockFlow{% endblock %}
+{% block page_title %}Settings{% endblock %}
+{% block page_subtitle %}Manage your personal account profile, password, and view system specifications{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0" style="max-width: 900px;">
+  <div class="row g-4">
+    <!-- Left: Profile & Password Change Forms -->
+    <div class="col-lg-8">
+      <!-- Profile Information -->
+      <div class="card card-sf mb-4">
+        <div class="card-header bg-white py-3 px-4 border-bottom">
+          <h5 class="fw-bold mb-0 text-dark">Profile Information</h5>
+          <small class="text-muted">Update your contact details</small>
+        </div>
+
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="update_profile">
+
+          <div class="card-body p-4">
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">First Name</label>
+                {{ profile_form.first_name }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Last Name</label>
+                {{ profile_form.last_name }}
+              </div>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Email Address</label>
+                {{ profile_form.email }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Phone Contact</label>
+                {{ profile_form.phone }}
+              </div>
+            </div>
+          </div>
+
+          <div class="card-footer bg-light p-3 px-4 border-top d-flex justify-content-end">
+            <button type="submit" class="btn btn-sf-primary btn-sm px-3 fw-semibold">
+              Save Profile Updates
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Change Password -->
+      <div class="card card-sf">
+        <div class="card-header bg-white py-3 px-4 border-bottom">
+          <h5 class="fw-bold mb-0 text-dark">Change Password</h5>
+          <small class="text-muted">Ensure your account uses a secure password</small>
+        </div>
+
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="change_password">
+
+          <div class="card-body p-4">
+            {% if password_form.errors %}
+              <div class="alert alert-danger py-2 small mb-3">
+                {% for field, errors in password_form.errors.items %}
+                  <div><strong>{{ field }}:</strong> {{ errors.0 }}</div>
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Current Password</label>
+              <input type="password" name="old_password" class="form-control" required placeholder="Enter current password">
+            </div>
+
+            <div class="row g-3 mb-2">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">New Password</label>
+                <input type="password" name="new_password1" class="form-control" required placeholder="New password">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Confirm New Password</label>
+                <input type="password" name="new_password2" class="form-control" required placeholder="Confirm new password">
+              </div>
+            </div>
+            <div class="form-text small">Must be at least 6 characters long and not too common.</div>
+          </div>
+
+          <div class="card-footer bg-light p-3 px-4 border-top d-flex justify-content-end">
+            <button type="submit" class="btn btn-sf-slate btn-sm px-3 fw-semibold">
+              Update Password
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Supermarket Store Identity & Inventory Scope -->
+      <div class="card card-sf mt-4">
+        <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="fw-bold mb-0 text-dark">
+              <i class="bi bi-shop text-success me-2"></i>Supermarket Enterprise & Branch Identity
+            </h5>
+            <small class="text-muted">Configure the supermarket name, branch, and contact info appearing on all audits and printed receipts</small>
+          </div>
+          <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1">
+            Active Store Facility
+          </span>
+        </div>
+
+        {% if is_manager %}
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_store">
+
+            <div class="card-body p-4">
+              <div class="row g-3 mb-3">
+                <div class="col-md-7">
+                  <label class="form-label fw-semibold small">Supermarket / Enterprise Name <span class="text-danger">*</span></label>
+                  {{ store_form.name }}
+                  <div class="form-text small">e.g. StockFlow Supermarket, Chandarana Foodplus, Quickmart</div>
+                </div>
+                <div class="col-md-5">
+                  <label class="form-label fw-semibold small">Branch Name / Store Code <span class="text-danger">*</span></label>
+                  {{ store_form.branch_name }}
+                  <div class="form-text small">e.g. Westlands Branch, CBD Central, Branch #04</div>
+                </div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold small">Store Phone Contact</label>
+                  {{ store_form.phone }}
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold small">Store Official Email</label>
+                  {{ store_form.email }}
+                </div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-8">
+                  <label class="form-label fw-semibold small">Physical Store Address</label>
+                  {{ store_form.address }}
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-semibold small">Tax PIN / Reg #</label>
+                  {{ store_form.tax_pin }}
+                </div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                  <label class="form-label fw-semibold small">Currency Code</label>
+                  {{ store_form.currency_symbol }}
+                </div>
+                <div class="col-md-8">
+                  <label class="form-label fw-semibold small">Receipt & Audit Voucher Footer Note</label>
+                  {{ store_form.receipt_footer_note }}
+                </div>
+              </div>
+            </div>
+
+            <div class="card-footer bg-light p-3 px-4 border-top d-flex justify-content-between align-items-center">
+              <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Updates will reflect immediately on all audit headers, reports, and receipts</small>
+              <button type="submit" class="btn btn-success btn-sm px-4 fw-semibold">
+                <i class="bi bi-check2 me-1"></i> Save Supermarket Identity
+              </button>
+            </div>
+          </form>
+        {% else %}
+          <div class="card-body p-4">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <span class="text-muted small d-block">Supermarket Enterprise:</span>
+                <strong class="fs-6 text-dark">{{ store_setting.name }}</strong>
+              </div>
+              <div class="col-md-6">
+                <span class="text-muted small d-block">Active Store Branch:</span>
+                <strong class="fs-6 text-dark">{{ store_setting.branch_name }}</strong>
+              </div>
+              <div class="col-md-6">
+                <span class="text-muted small d-block">Address:</span>
+                <span class="text-dark">{{ store_setting.address }}</span>
+              </div>
+              <div class="col-md-6">
+                <span class="text-muted small d-block">Tax PIN / Reg #:</span>
+                <span class="font-monospace text-dark">{{ store_setting.tax_pin }}</span>
+              </div>
+            </div>
+            <div class="alert alert-light border mt-3 mb-0 small text-muted">
+              <i class="bi bi-lock me-1"></i>Only store managers and administrators can edit the supermarket enterprise profile.
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right: Account Overview & System Info -->
+    <div class="col-lg-4">
+      <!-- Account Badge Card -->
+      <div class="card card-sf mb-4 text-center p-4">
+        <div class="sidebar-user-avatar mx-auto mb-3" style="width: 64px; height: 64px; font-size: 1.5rem;">
+          {{ user.username|slice:":1"|upper }}
+        </div>
+        <h5 class="fw-bold text-dark mb-1">{{ user.get_full_name|default:user.username }}</h5>
+        <div class="text-muted small mb-2">@{{ user.username }}</div>
+        <div>
+          <span class="badge {{ user.role_badge_class }} fs-6 px-3 py-1">
+            {{ user.get_role_display }}
+          </span>
+        </div>
+        <div class="text-muted small mt-3 pt-3 border-top">
+          Member since {{ user.date_joined|date:"F Y" }}
+        </div>
+      </div>
+
+      <!-- System Information Card -->
+      <div class="card card-sf">
+        <div class="card-header bg-white py-3 px-4 border-bottom">
+          <h6 class="fw-bold mb-0 text-dark">System Information</h6>
+        </div>
+        <div class="card-body p-3 small text-secondary">
+          <div class="d-flex justify-content-between py-1 border-bottom">
+            <span>Platform</span>
+            <strong class="text-dark">StockFlow Retail OS</strong>
+          </div>
+          <div class="d-flex justify-content-between py-1 border-bottom">
+            <span>Version</span>
+            <strong class="text-dark">1.0.0 (MVP)</strong>
+          </div>
+          <div class="d-flex justify-content-between py-1 border-bottom">
+            <span>Database</span>
+            <strong class="text-dark">SQLite (Relational)</strong>
+          </div>
+          <div class="d-flex justify-content-between py-1 border-bottom">
+            <span>Server Framework</span>
+            <strong class="text-dark">Django 6.0</strong>
+          </div>
+          <div class="d-flex justify-content-between py-1">
+            <span>Status Engine</span>
+            <strong class="text-success">Active & Authoritative</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

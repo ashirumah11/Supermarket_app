@@ -1,0 +1,55 @@
+{% extends 'base_app.html' %}
+
+{% block title %}Delete Location — {{ location.name }} — StockFlow{% endblock %}
+{% block page_title %}Delete Location{% endblock %}
+{% block page_subtitle %}Confirm deletion of physical storage location{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0" style="max-width: 580px;">
+  <div class="card card-sf border-danger">
+    <div class="card-header bg-danger text-white py-3 px-4">
+      <h5 class="fw-bold mb-0">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> Confirm Location Deletion
+      </h5>
+    </div>
+
+    <div class="card-body p-4">
+      <p class="fs-6 text-dark mb-3">
+        Are you sure you want to permanently delete the location:
+        <strong class="text-danger">{{ location.name }} ({{ location.code }})</strong>?
+      </p>
+
+      {% if active_stock > 0 %}
+        <div class="alert alert-danger mb-4">
+          <i class="bi bi-x-circle-fill me-2"></i>
+          <strong>Blocked:</strong> This location currently holds active stock ({{ active_stock }} item records with positive quantity).
+          You must transfer or write off all inventory from this location before it can be removed.
+        </div>
+      {% else %}
+        <div class="alert alert-warning mb-4">
+          <i class="bi bi-exclamation-circle-fill me-2"></i>
+          This location currently holds <strong>0 active units</strong>. Deletion will remove the location record from future operations.
+        </div>
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="d-flex justify-content-between align-items-center pt-2">
+          <a href="{% url 'location_detail' pk=location.pk %}" class="btn btn-outline-secondary">
+            Cancel & Go Back
+          </a>
+          {% if active_stock == 0 %}
+            <button type="submit" class="btn btn-danger px-4">
+              <i class="bi bi-trash me-1"></i> Permanently Delete
+            </button>
+          {% else %}
+            <a href="{% url 'transfer_create' %}?from={{ location.pk }}" class="btn btn-warning px-4">
+              <i class="bi bi-arrow-left-right me-1"></i> Transfer Stock Out First
+            </a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

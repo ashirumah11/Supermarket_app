@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audit Receipt #MOV-{{ movement.pk }} — {{ store.name }}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      padding: 2rem 0;
+    }
+    .receipt-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 2.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      border: 1px solid #e2e8f0;
+    }
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .receipt-header {
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .store-brand-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #0f172a;
+    }
+    .store-branch-badge {
+      font-size: 0.8rem;
+      background: #e2e8f0;
+      color: #334155;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .signature-box {
+      border-top: 1px dashed #94a3b8;
+      padding-top: 0.5rem;
+      margin-top: 3rem;
+      text-align: center;
+      font-size: 0.85rem;
+    }
+    @media print {
+      body {
+        background-color: #ffffff;
+        padding: 0;
+      }
+      .receipt-container {
+        box-shadow: none;
+        border: none;
+        padding: 1rem;
+        max-width: 100%;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container mb-4 no-print text-center">
+  <div class="d-inline-flex gap-2">
+    <button onclick="window.print()" class="btn btn-primary px-4 fw-semibold shadow-sm">
+      <i class="bi bi-printer me-2"></i> Print Movement Voucher
+    </button>
+    <button onclick="window.close()" class="btn btn-outline-secondary px-3">
+      Close Window
+    </button>
+  </div>
+</div>
+
+<div class="receipt-container">
+  <!-- Header with Supermarket Identity -->
+  <div class="receipt-header d-flex justify-content-between align-items-start">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <h1 class="store-brand-title mb-0">{{ store.name }}</h1>
+        <span class="store-branch-badge">{{ store.branch_name }}</span>
+      </div>
+      <div class="text-muted small">
+        <div><i class="bi bi-geo-alt me-1"></i> {{ store.address }}</div>
+        <div><i class="bi bi-telephone me-1"></i> {{ store.phone }} &nbsp;|&nbsp; <i class="bi bi-envelope me-1"></i> {{ store.email }}</div>
+        {% if store.tax_pin %}
+          <div><strong>TAX PIN / REG:</strong> <span class="mono">{{ store.tax_pin }}</span></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="text-end">
+      <div class="badge bg-dark text-white px-3 py-2 fs-6 fw-bold mb-1">
+        STOCK {{ movement.get_type_display|upper }} AUDIT VOUCHER
+      </div>
+      <div class="mono fw-bold fs-5 text-primary mt-1">MOV-{{ movement.pk|stringformat:"06d" }}</div>
+      <div class="text-muted small">Timestamp: {{ movement.created_at|date:"Y-m-d H:i:s" }}</div>
+    </div>
+  </div>
+
+  <!-- Location & Context Notice -->
+  <div class="p-3 bg-light rounded-3 border mb-4">
+    <div class="row g-2 small">
+      <div class="col-sm-6">
+        <span class="text-muted">Storage Location:</span>
+        <strong class="d-block text-dark">
+          {% if movement.location %}
+            {{ movement.location.name }} ({{ movement.location.code }})
+          {% else %}
+            Main Supermarket Floor
+          {% endif %}
+        </strong>
+      </div>
+      <div class="col-sm-6">
+        <span class="text-muted">Operation Type:</span>
+        <strong class="d-block text-dark">{{ movement.get_type_display }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Product Transaction Specification Table -->
+  <table class="table table-bordered mb-4">
+    <thead class="table-light">
+      <tr>
+        <th>Item Description</th>
+        <th>SKU</th>
+        <th class="text-center">Previous Stock</th>
+        <th class="text-center">Movement Qty</th>
+        <th class="text-center">New Balance</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <div class="fw-bold fs-6">{{ movement.product.name }}</div>
+          <div class="text-muted small">Category: {{ movement.product.category.name|default:"General" }}</div>
+        </td>
+        <td class="mono small">{{ movement.product.sku }}</td>
+        <td class="text-center fs-6 text-muted">{{ movement.previous_quantity }}</td>
+        <td class="text-center fs-5 fw-bold {% if movement.type == 'OUT' %}text-danger{% elif movement.type == 'IN' %}text-success{% else %}text-primary{% endif %}">
+          {% if movement.type == 'OUT' %}-{% elif movement.type == 'IN' %}+{% endif %}{{ movement.quantity }}
+        </td>
+        <td class="text-center fs-5 fw-bold text-dark">{{ movement.new_quantity }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Operational Audit Details -->
+  <div class="card bg-light border-0 mb-4">
+    <div class="card-body p-3">
+      <div class="row g-2 small">
+        <div class="col-sm-6">
+          <span class="text-muted">Operational Reason / Justification:</span>
+          <strong class="d-block text-dark">{{ movement.reason }}</strong>
+        </div>
+        <div class="col-sm-6">
+          <span class="text-muted">Document / External Reference #:</span>
+          <strong class="d-block text-dark">{{ movement.reference|default:"None Recorded" }}</strong>
+        </div>
+        <div class="col-sm-6 mt-2">
+          <span class="text-muted">Authorized By Operator:</span>
+          <strong class="d-block text-dark">{{ movement.user.get_full_name|default:movement.user.username }} ({{ movement.user.get_role_display }})</strong>
+        </div>
+        <div class="col-sm-6 mt-2">
+          <span class="text-muted">Unit Retail Price:</span>
+          <strong class="d-block text-dark">{{ store.currency_symbol }} {{ movement.product.price|floatformat:2 }}</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Signatures -->
+  <div class="row mt-5 pt-3">
+    <div class="col-6">
+      <div class="signature-box">
+        <strong>Operator / Cashier Sign-off</strong><br>
+        <span class="text-muted small">{{ movement.user.username }} • Signature & Date</span>
+      </div>
+    </div>
+    <div class="col-6">
+      <div class="signature-box">
+        <strong>Manager / Audit Supervisor Verification</strong><br>
+        <span class="text-muted small">Signature & Stamp</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Receipt Footer -->
+  <div class="text-center text-muted small mt-5 pt-3 border-top">
+    <p class="mb-1 font-monospace" style="font-size: 0.75rem;">
+      {{ store.receipt_footer_note }}
+    </p>
+    <div style="font-size: 0.7rem;">
+      StockFlow Smart Inventory & Stock Management System • Facility: {{ store.name }} ({{ store.branch_name }})
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

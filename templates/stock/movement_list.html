@@ -1,0 +1,166 @@
+{% extends 'base_app.html' %}
+
+{% block title %}Stock Movements & Audit Ledger — StockFlow{% endblock %}
+{% block page_title %}Stock Movements Ledger{% endblock %}
+{% block page_subtitle %}Comprehensive audit trail of all inventory additions, dispatches, and reconciliations{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <!-- Header with Record Movement Action -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <h2 class="h4 fw-bold text-dark mb-1">Stock Activity Ledger</h2>
+      <p class="text-muted small mb-0">{{ total_count }} total inventory movement transactions logged.</p>
+    </div>
+
+    {% if is_manager %}
+      <a href="{% url 'stock_movement_create' %}" class="btn btn-sf-primary d-flex align-items-center gap-2">
+        <i class="bi bi-plus-lg"></i> Record Stock Movement
+      </a>
+    {% endif %}
+  </div>
+
+  <!-- Filters Card -->
+  <div class="card card-sf mb-4">
+    <div class="card-body p-3">
+      <form method="get" action="{% url 'stock_movements' %}" class="row g-2 align-items-center">
+        <!-- Search Keyword -->
+        <div class="col-md-3">
+          <input type="text" name="q" value="{{ selected_query }}" class="form-control" placeholder="Search reason, reference, product...">
+        </div>
+
+        <!-- Product Filter -->
+        <div class="col-md-2">
+          <select name="product" class="form-select">
+            <option value="">All Products</option>
+            {% for p in products %}
+              <option value="{{ p.id }}" {% if selected_product == p.id|stringformat:"s" %}selected{% endif %}>{{ p.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Movement Type Filter -->
+        <div class="col-md-2">
+          <select name="type" class="form-select">
+            <option value="">All Types</option>
+            {% for val, label in movement_types %}
+              <option value="{{ val }}" {% if selected_type == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- User Filter -->
+        <div class="col-md-2">
+          <select name="user" class="form-select">
+            <option value="">All Operators</option>
+            {% for u in users %}
+              <option value="{{ u.id }}" {% if selected_user == u.id|stringformat:"s" %}selected{% endif %}>{{ u.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Date Range Filter -->
+        <div class="col-md-2">
+          <input type="date" name="date_from" value="{{ selected_date_from }}" class="form-control" title="Filter from date">
+        </div>
+
+        <!-- Action Button -->
+        <div class="col-md-1 d-flex gap-1">
+          <button type="submit" class="btn btn-sf-slate w-100" title="Apply Filter">
+            <i class="bi bi-funnel"></i>
+          </button>
+          {% if selected_query or selected_product or selected_type or selected_user or selected_date_from %}
+            <a href="{% url 'stock_movements' %}" class="btn btn-outline-secondary" title="Clear Filters">
+              <i class="bi bi-x-circle"></i>
+            </a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Movements Table Card -->
+  <div class="card card-sf">
+    <div class="card-body p-0">
+      {% if movements %}
+        <div class="table-responsive">
+          <table class="table table-sf mb-0">
+            <thead>
+              <tr>
+                <th>Date & Time</th>
+                <th>Product & SKU</th>
+                <th>Operation</th>
+                <th class="text-center">Units Changed</th>
+                <th class="text-center">Previous &rarr; New</th>
+                <th>Reason / Operational Justification</th>
+                <th>Reference #</th>
+                <th>Staff Operator</th>
+                <th class="text-end">Receipt / Audit</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for m in movements %}
+                <tr>
+                  <td class="text-muted small">
+                    {{ m.created_at|date:"M d, Y H:i" }}
+                  </td>
+                  <td>
+                    <a href="{% url 'product_detail' pk=m.product.pk %}" class="fw-bold text-dark text-decoration-none d-block">
+                      {{ m.product.name }}
+                    </a>
+                    <span class="font-monospace small text-muted">{{ m.product.sku }}</span>
+                  </td>
+                  <td>
+                    <span class="{{ m.badge_class }}">{{ m.get_type_display }}</span>
+                  </td>
+                  <td class="text-center">
+                    <span class="fw-bold fs-6 {% if m.type == 'OUT' %}text-danger{% elif m.type == 'IN' %}text-success{% else %}text-primary{% endif %}">
+                      {% if m.type == 'OUT' %}-{% elif m.type == 'IN' %}+{% endif %}{{ m.quantity }}
+                    </span>
+                  </td>
+                  <td class="text-center text-muted small">
+                    {{ m.previous_quantity }} &rarr; <strong class="text-dark">{{ m.new_quantity }}</strong>
+                  </td>
+                  <td>
+                    <span class="text-dark">{{ m.reason }}</span>
+                  </td>
+                  <td>
+                    {% if m.reference %}
+                      <span class="badge bg-light text-dark border font-monospace">{{ m.reference }}</span>
+                    {% else %}
+                      <span class="text-muted small">—</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center gap-1">
+                      <i class="bi bi-person-circle text-muted"></i>
+                      <span class="small fw-medium">{{ m.user.username|default:"System" }}</span>
+                    </div>
+                  </td>
+                  <td class="text-end">
+                    <a href="{% url 'movement_receipt' pk=m.pk %}" target="_blank" class="btn btn-sm btn-outline-primary py-1 px-2" title="Print Audit Voucher / Receipt">
+                      <i class="bi bi-printer"></i>
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="p-3 border-top">
+          {% include 'components/pagination.html' %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="bi bi-clock-history"></i>
+          </div>
+          <h5 class="fw-bold text-dark">No Movements Recorded</h5>
+          <p class="text-muted small mb-0">Adjustments, sales dispatches, and incoming stock records will be listed here.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

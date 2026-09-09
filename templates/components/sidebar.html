@@ -1,0 +1,133 @@
+<aside id="sidebar-wrapper">
+  <!-- Brand Header -->
+  <div class="sidebar-header pb-2">
+    <a href="{% url 'dashboard' %}" class="sidebar-brand">
+      <div class="sidebar-brand-icon">
+        <i class="bi bi-boxes"></i>
+      </div>
+      <div>
+        <span>Stock<span class="text-success">Flow</span></span>
+        <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 400; letter-spacing: 0.05em; text-transform: uppercase;">
+          Smart Inventory OS
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <!-- Supermarket Store Identity Box -->
+  <div class="px-3 pb-3">
+    <div class="p-2 px-3 rounded-3" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.08);">
+      <div class="d-flex align-items-center gap-2">
+        <div class="text-success">
+          <i class="bi bi-shop fs-6"></i>
+        </div>
+        <div class="overflow-hidden">
+          <div class="text-white text-truncate fw-semibold" style="font-size: 0.8rem;" title="{{ store_name }}">
+            {{ store_name }}
+          </div>
+          <div class="text-white-50 text-truncate" style="font-size: 0.7rem;" title="{{ store_branch }}">
+            <i class="bi bi-geo-alt me-1" style="font-size: 0.65rem;"></i>{{ store_branch }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Menu -->
+  <div class="sidebar-menu">
+    <div class="sidebar-heading">Operations</div>
+
+    <a href="{% url 'dashboard' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+      <i class="bi bi-grid-1x2-fill"></i>
+      <span>Dashboard</span>
+    </a>
+
+    <a href="{% url 'product_list' %}" class="sidebar-nav-item {% if 'inventory' in request.path and 'category' not in request.path and 'supplier' not in request.path and 'location' not in request.path %}active{% endif %}">
+      <i class="bi bi-box-seam-fill"></i>
+      <span>Products</span>
+    </a>
+
+    <a href="{% url 'location_list' %}" class="sidebar-nav-item {% if 'locations' in request.path %}active{% endif %}">
+      <i class="bi bi-geo-alt-fill"></i>
+      <span>Locations</span>
+    </a>
+
+    <a href="{% url 'stock_movements' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'stock_movements' or request.resolver_match.url_name == 'stock_movement_create' %}active{% endif %}">
+      <i class="bi bi-arrow-left-right"></i>
+      <span>Stock Movements</span>
+    </a>
+
+    <a href="{% url 'transfer_list' %}" class="sidebar-nav-item {% if 'transfer' in request.path %}active{% endif %}">
+      <i class="bi bi-arrow-left-right text-info"></i>
+      <span>Stock Transfers</span>
+    </a>
+
+    <div class="sidebar-heading mt-3">Catalog & Supply</div>
+
+    <a href="{% url 'category_list' %}" class="sidebar-nav-item {% if 'categories' in request.path %}active{% endif %}">
+      <i class="bi bi-tags-fill"></i>
+      <span>Categories</span>
+    </a>
+
+    <a href="{% url 'supplier_list' %}" class="sidebar-nav-item {% if 'suppliers' in request.path %}active{% endif %}">
+      <i class="bi bi-truck"></i>
+      <span>Suppliers</span>
+    </a>
+
+    <div class="sidebar-heading mt-3">Monitoring</div>
+
+    <a href="{% url 'notification_list' %}" class="sidebar-nav-item {% if 'notifications' in request.path %}active{% endif %} position-relative">
+      <i class="bi bi-bell-fill"></i>
+      <span>Notifications</span>
+      {% if unread_notifications_count > 0 %}
+        <span class="badge bg-danger rounded-pill ms-auto px-2">{{ unread_notifications_count }}</span>
+      {% endif %}
+    </a>
+
+    {% if is_manager %}
+      <a href="{% url 'reports' %}" class="sidebar-nav-item {% if 'reports' in request.path %}active{% endif %}">
+        <i class="bi bi-file-earmark-bar-graph-fill"></i>
+        <span>Reports & Valuation</span>
+      </a>
+    {% endif %}
+
+    {% if is_admin %}
+      <div class="sidebar-heading mt-3">Administration</div>
+      <a href="{% url 'user_list' %}" class="sidebar-nav-item {% if 'users' in request.path %}active{% endif %}">
+        <i class="bi bi-people-fill"></i>
+        <span>Team & Roles</span>
+      </a>
+    {% endif %}
+
+    <div class="sidebar-heading mt-3">Account</div>
+    <a href="{% url 'settings' %}" class="sidebar-nav-item {% if 'settings' in request.path %}active{% endif %}">
+      <i class="bi bi-gear-fill"></i>
+      <span>Settings</span>
+    </a>
+
+    <a href="{% url 'logout' %}" class="sidebar-nav-item text-danger-emphasis mt-2">
+      <i class="bi bi-box-arrow-right text-danger"></i>
+      <span>Sign Out</span>
+    </a>
+  </div>
+
+  <!-- Sidebar User Profile Footer -->
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="sidebar-user-avatar">
+        {{ user.username|slice:":1"|upper }}
+      </div>
+      <div class="flex-grow-1 overflow-hidden">
+        <div class="text-white text-truncate fw-semibold" style="font-size: 0.85rem;">
+          {{ user.get_full_name|default:user.username }}
+        </div>
+        <div class="d-flex align-items-center gap-1 mt-1">
+          <span class="badge {{ user.role_badge_class }}">
+            {{ user.get_role_display }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</aside>
+<div id="sidebar-backdrop" class="sidebar-backdrop"></div>

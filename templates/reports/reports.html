@@ -1,0 +1,254 @@
+{% extends 'base_app.html' %}
+{% load humanize %}
+
+{% block title %}Executive Reports & Valuation — StockFlow{% endblock %}
+{% block page_title %}Reports & Stock Valuation{% endblock %}
+{% block page_subtitle %}High-level summary of store inventory health, throughput, and asset capitalization{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <!-- Header with Print & Export CSV Actions -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+    <div>
+      <h2 class="h4 fw-bold text-dark mb-1">Store Inventory Report & Valuation Audit</h2>
+      <p class="text-muted small mb-0">Generated on {{ generated_at|date:"F d, Y H:i" }} &bull; Authoritative database snapshot</p>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <button type="button" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" onclick="window.print()">
+        <i class="bi bi-printer"></i> Print Audit Report
+      </button>
+      <a href="{% url 'reports' %}?export=csv{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" class="btn btn-sf-primary btn-sm d-flex align-items-center gap-1">
+        <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
+      </a>
+    </div>
+  </div>
+
+  <!-- Supermarket Facility Header for Reports -->
+  <div class="p-3 bg-white rounded-3 border mb-4 d-flex justify-content-between align-items-center">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-shop text-success fs-3"></i>
+        <div>
+          <h3 class="h5 fw-bold text-dark mb-0">{{ store_name }}</h3>
+          <span class="text-muted small">Supermarket Facility: <strong>{{ store_branch }}</strong> &bull; {{ store_setting.address }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="text-end small text-muted">
+      <div>TAX PIN / REG: <span class="font-monospace text-dark fw-bold">{{ store_setting.tax_pin }}</span></div>
+      <div>Valuation Currency: <span class="badge bg-light text-dark border">{{ store_setting.currency_symbol }}</span></div>
+    </div>
+  </div>
+
+  <!-- Date Range Filter -->
+  <div class="card card-sf mb-4 d-print-none">
+    <div class="card-body p-3">
+      <form method="get" action="{% url 'reports' %}" class="row g-2 align-items-center">
+        <div class="col-auto">
+          <span class="small fw-semibold text-muted"><i class="bi bi-calendar3 me-1"></i> Movement Date Filter:</span>
+        </div>
+        <div class="col-md-3">
+          <input type="date" name="date_from" value="{{ date_from }}" class="form-control form-control-sm" placeholder="From Date">
+        </div>
+        <div class="col-md-3">
+          <input type="date" name="date_to" value="{{ date_to }}" class="form-control form-control-sm" placeholder="To Date">
+        </div>
+        <div class="col-auto d-flex gap-1">
+          <button type="submit" class="btn btn-sf-slate btn-sm">Filter Activity</button>
+          {% if date_from or date_to %}
+            <a href="{% url 'reports' %}" class="btn btn-outline-secondary btn-sm" title="Clear Date Filter">Clear</a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Key Aggregate Metrics -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-md-3">
+      <div class="p-3 bg-white rounded-3 border">
+        <small class="text-muted text-uppercase fw-semibold d-block">Catalog Items</small>
+        <span class="h3 fw-bold text-dark">{{ total_products }}</span>
+        <div class="small text-muted mt-1">{{ in_stock_count }} in healthy state</div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-md-3">
+      <div class="p-3 bg-white rounded-3 border">
+        <small class="text-muted text-uppercase fw-semibold d-block">Total Shelf Stock</small>
+        <span class="h3 fw-bold text-dark">{{ total_stock|intcomma }} units</span>
+        <div class="small text-muted mt-1">Physical count across inventory</div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-md-3">
+      <div class="p-3 bg-white rounded-3 border">
+        <small class="text-muted text-uppercase fw-semibold d-block">Total Inventory Valuation</small>
+        <span class="h3 fw-bold text-success">KES {{ total_inventory_value|floatformat:2|intcomma }}</span>
+        <div class="small text-muted mt-1">Total retail asset worth</div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-md-3">
+      <div class="p-3 bg-white rounded-3 border">
+        <small class="text-muted text-uppercase fw-semibold d-block">At Risk (Low / Out)</small>
+        <span class="h3 fw-bold text-danger">{{ low_stock_count|add:out_of_stock_count }}</span>
+        <div class="small text-muted mt-1">{{ low_stock_count }} low &bull; {{ out_of_stock_count }} depleted</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stock Movement Throughput Summary in Period -->
+  <div class="card card-sf mb-4">
+    <div class="card-header bg-white py-3 px-4 border-bottom">
+      <h5 class="fw-bold mb-0 text-dark">Stock Movement Throughput Summary</h5>
+      <small class="text-muted">Analysis of goods received vs dispatched</small>
+    </div>
+    <div class="card-body p-4">
+      <div class="row g-4 text-center">
+        <div class="col-md-4 border-end">
+          <div class="text-success fs-1 mb-1"><i class="bi bi-box-arrow-in-down"></i></div>
+          <h6 class="fw-bold text-dark">Stock IN Operations</h6>
+          <div class="display-6 fw-bold text-success mb-1">+{{ movement_summary.in_units|intcomma }}</div>
+          <small class="text-muted">{{ movement_summary.in_count }} transactions logged</small>
+        </div>
+
+        <div class="col-md-4 border-end">
+          <div class="text-danger fs-1 mb-1"><i class="bi bi-box-arrow-up"></i></div>
+          <h6 class="fw-bold text-dark">Stock OUT Operations</h6>
+          <div class="display-6 fw-bold text-danger mb-1">-{{ movement_summary.out_units|intcomma }}</div>
+          <small class="text-muted">{{ movement_summary.out_count }} dispatches/sales logged</small>
+        </div>
+
+        <div class="col-md-4">
+          <div class="text-primary fs-1 mb-1"><i class="bi bi-sliders"></i></div>
+          <h6 class="fw-bold text-dark">Audit Adjustments</h6>
+          <div class="display-6 fw-bold text-primary mb-1">{{ movement_summary.adjust_count }}</div>
+          <small class="text-muted">{{ movement_summary.adjust_units|intcomma }} units reconciled</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Valuation Breakdown Table -->
+  <div class="card card-sf mb-4">
+    <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="fw-bold mb-0 text-dark">Category Inventory & Valuation Breakdown</h5>
+        <small class="text-muted">Capital distribution across store departments</small>
+      </div>
+    </div>
+
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sf mb-0">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th class="text-center">Catalog Products</th>
+              <th class="text-center">Total In-Stock Units</th>
+              <th class="text-end">Total Valuation (KES)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cat in categories %}
+              <tr>
+                <td>
+                  <strong class="text-dark">{{ cat.name }}</strong>
+                  <div class="text-muted small">{{ cat.description|default:"—" }}</div>
+                </td>
+                <td class="text-center">{{ cat.total_products }}</td>
+                <td class="text-center fw-semibold">{{ cat.total_units|default:0|intcomma }}</td>
+                <td class="text-end fw-bold text-dark">
+                  KES {{ cat.category_value|default:0|floatformat:2|intcomma }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Valued Catalog Items -->
+  <div class="card card-sf">
+    <div class="card-header bg-white py-3 px-4 border-bottom">
+      <h5 class="fw-bold mb-0 text-dark">Top Valued Inventory Items</h5>
+      <small class="text-muted">Highest unit price items in stock</small>
+    </div>
+
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sf mb-0">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Category</th>
+              <th>Supplier</th>
+              <th class="text-end">Unit Price</th>
+              <th class="text-center">Stock</th>
+              <th class="text-end">Total Value</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in top_valued_products %}
+              <tr>
+                <td>
+                  <a href="{% url 'product_detail' pk=p.pk %}" class="fw-bold text-dark text-decoration-none">
+                    {{ p.name }}
+                  </a>
+                  <span class="font-monospace small text-muted d-block">{{ p.sku }}</span>
+                </td>
+                <td>{{ p.category.name|default:"—" }}</td>
+                <td class="small text-muted">{{ p.supplier.name|default:"—" }}</td>
+                <td class="text-end fw-semibold">KES {{ p.price|floatformat:2|intcomma }}</td>
+                <td class="text-center fw-bold">{{ p.quantity }}</td>
+                <td class="text-end fw-bold">KES {{ p.total_value|floatformat:2|intcomma }}</td>
+                <td><span class="{{ p.status_badge_class }}">{{ p.stock_status_display }}</span></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audit Certification & Sign-off Block -->
+  <div class="card card-sf mt-4">
+    <div class="card-body p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0 text-dark">
+          <i class="bi bi-shield-check text-success me-2"></i>Official Store Inventory Audit Certification
+        </h6>
+        <small class="text-muted">Generated by StockFlow for {{ store_name }} ({{ store_branch }})</small>
+      </div>
+      <p class="small text-muted mb-4">
+        This document serves as an authoritative inventory audit record reflecting current ledger balances and historical transactions for {{ store_name }} — {{ store_branch }}.
+      </p>
+
+      <div class="row pt-4 mt-2">
+        <div class="col-4 text-center">
+          <div style="border-top: 1px dashed #94a3b8; padding-top: 0.5rem;" class="small">
+            <strong class="text-dark d-block">Inventory Auditor / Stock Controller</strong>
+            <span class="text-muted">Signature & Date</span>
+          </div>
+        </div>
+        <div class="col-4 text-center">
+          <div style="border-top: 1px dashed #94a3b8; padding-top: 0.5rem;" class="small">
+            <strong class="text-dark d-block">Store Branch Manager</strong>
+            <span class="text-muted">Signature & Date</span>
+          </div>
+        </div>
+        <div class="col-4 text-center">
+          <div style="border-top: 1px dashed #94a3b8; padding-top: 0.5rem;" class="small">
+            <strong class="text-dark d-block">Finance / Head Office Seal</strong>
+            <span class="text-muted">Official Stamp</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

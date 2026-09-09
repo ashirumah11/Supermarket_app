@@ -1,0 +1,58 @@
+<!-- Quick Stock IN / OUT Modal -->
+<div class="modal fade" id="quickStockModal" tabindex="-1" aria-labelledby="quickStockModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header border-bottom bg-light">
+        <h5 class="modal-title fw-bold" id="quickStockModalTitle">Record Stock Movement</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form id="quickStockForm" method="post" action="">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <input type="hidden" id="quickStockActionType" name="action_type" value="in">
+
+        <div class="modal-body p-4">
+          <!-- Product Summary Box -->
+          <div class="p-3 bg-light rounded-3 border mb-3">
+            <div class="text-muted small text-uppercase fw-semibold mb-1">Target Product</div>
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="mb-0 fw-bold text-dark" id="quickStockProductName">Product Name</h6>
+                <span class="font-monospace small text-muted" id="quickStockProductSku">SKU-0000</span>
+              </div>
+              <div class="text-end">
+                <small class="text-muted d-block">Current Stock</small>
+                <span class="badge bg-secondary fs-6" id="quickStockCurrentQty">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quantity Input -->
+          <div class="mb-3">
+            <label for="id_quantity" class="form-label fw-semibold">Quantity <span class="text-danger">*</span></label>
+            <input type="number" name="quantity" id="id_quantity" class="form-control form-control-lg" min="1" required placeholder="Enter units (e.g. 10)">
+            <div class="form-text">Must be a positive whole number greater than 0.</div>
+          </div>
+
+          <!-- Reason Input -->
+          <div class="mb-3">
+            <label for="id_reason" class="form-label fw-semibold">Operational Reason <span class="text-danger">*</span></label>
+            <input type="text" name="reason" id="id_reason" class="form-control" required placeholder="e.g. Supplier delivery, OTC sale, Damaged box">
+          </div>
+
+          <!-- Reference Input -->
+          <div class="mb-2">
+            <label for="id_reference" class="form-label fw-semibold">Reference / Receipt # (Optional)</label>
+            <input type="text" name="reference" id="id_reference" class="form-control" placeholder="e.g. PO-98012, REC-44102">
+          </div>
+        </div>
+
+        <div class="modal-footer border-top bg-light">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" id="quickStockSubmitBtn" class="btn btn-success px-4">Confirm</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,146 @@
+{% extends 'base_app.html' %}
+
+{% block title %}Category Management — StockFlow{% endblock %}
+{% block page_title %}Product Categories{% endblock %}
+{% block page_subtitle %}Organize retail inventory into departments and departments classification{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <!-- Top Bar with Search and Add Modal Trigger -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <h2 class="h4 fw-bold text-dark mb-1">Categories Directory</h2>
+      <p class="text-muted small mb-0">{{ total_count }} categories configured in the store system.</p>
+    </div>
+
+    {% if is_manager %}
+      <button type="button" class="btn btn-sf-primary d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+        <i class="bi bi-plus-lg"></i> Add New Category
+      </button>
+    {% endif %}
+  </div>
+
+  <!-- Search Card -->
+  <div class="card card-sf mb-4">
+    <div class="card-body p-3">
+      <form method="get" action="{% url 'category_list' %}" class="d-flex gap-2">
+        <div class="input-group">
+          <span class="input-group-text bg-white text-muted border-end-0"><i class="bi bi-search"></i></span>
+          <input type="text" name="q" value="{{ query }}" class="form-control border-start-0" placeholder="Search categories by name or description...">
+        </div>
+        <button type="submit" class="btn btn-sf-slate px-4">Search</button>
+        {% if query %}
+          <a href="{% url 'category_list' %}" class="btn btn-outline-secondary" title="Clear search">
+            <i class="bi bi-x-circle"></i>
+          </a>
+        {% endif %}
+      </form>
+    </div>
+  </div>
+
+  <!-- Categories Table Card -->
+  <div class="card card-sf">
+    <div class="card-body p-0">
+      {% if categories %}
+        <div class="table-responsive">
+          <table class="table table-sf mb-0">
+            <thead>
+              <tr>
+                <th>Category Name</th>
+                <th>Description</th>
+                <th class="text-center">Associated Products</th>
+                <th>Created</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for c in categories %}
+                <tr>
+                  <td>
+                    <span class="fw-bold text-dark fs-6">{{ c.name }}</span>
+                  </td>
+                  <td class="text-muted">
+                    {{ c.description|default:"No description" }}
+                  </td>
+                  <td class="text-center">
+                    <a href="{% url 'product_list' %}?category={{ c.id }}" class="badge bg-light text-dark border text-decoration-none px-3 py-2">
+                      {{ c.total_products }} item{{ c.total_products|pluralize }}
+                    </a>
+                  </td>
+                  <td class="text-muted small">
+                    {{ c.created_at|date:"M d, Y" }}
+                  </td>
+                  <td class="text-end">
+                    <div class="d-inline-flex gap-1">
+                      <a href="{% url 'product_list' %}?category={{ c.id }}" class="btn btn-sm btn-outline-secondary py-1 px-2" title="View Products">
+                        <i class="bi bi-box-seam"></i>
+                      </a>
+                      {% if is_manager %}
+                        <a href="{% url 'category_edit' pk=c.pk %}" class="btn btn-sm btn-outline-primary py-1 px-2" title="Edit Category">
+                          <i class="bi bi-pencil"></i>
+                        </a>
+                        <a href="{% url 'category_delete' pk=c.pk %}" class="btn btn-sm btn-outline-danger py-1 px-2" title="Delete Category">
+                          <i class="bi bi-trash"></i>
+                        </a>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="p-3 border-top">
+          {% include 'components/pagination.html' %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="bi bi-tags"></i>
+          </div>
+          <h5 class="fw-bold text-dark">No Categories Found</h5>
+          <p class="text-muted small mb-3">Organize your store catalog by creating categories.</p>
+          {% if is_manager %}
+            <button type="button" class="btn btn-sf-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+              <i class="bi bi-plus-lg me-1"></i> Add New Category
+            </button>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add New Category -->
+{% if is_manager %}
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header border-bottom bg-light">
+        <h5 class="modal-title fw-bold" id="addCategoryModalTitle">Add Product Category</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form method="post" action="{% url 'category_create' %}">
+        {% csrf_token %}
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label for="{{ form.name.id_for_label }}" class="form-label fw-semibold">Category Name <span class="text-danger">*</span></label>
+            {{ form.name }}
+          </div>
+          <div class="mb-2">
+            <label for="{{ form.description.id_for_label }}" class="form-label fw-semibold">Description</label>
+            {{ form.description }}
+          </div>
+        </div>
+        <div class="modal-footer border-top bg-light">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-sf-primary px-4 fw-semibold">Create Category</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

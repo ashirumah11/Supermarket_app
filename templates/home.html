@@ -1,0 +1,351 @@
+{% extends 'base.html' %}
+
+{% block title %}StockFlow — Smarter Inventory. Better Business.{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="landing-hero text-center text-lg-start">
+  <div class="container py-4">
+    <div class="row align-items-center gy-5">
+      <div class="col-lg-7">
+        <div class="landing-badge">
+          <i class="bi bi-shield-check text-success"></i>
+          <span>Next-Generation Retail Inventory OS</span>
+        </div>
+        <h1 class="display-4 fw-extrabold text-white mb-3" style="line-height: 1.15; letter-spacing: -0.03em;">
+          Smarter Inventory.<br>
+          <span class="text-success">Better Business.</span>
+        </h1>
+        <p class="lead text-light opacity-90 mb-4 pe-lg-4" style="font-size: 1.15rem; font-weight: 400; line-height: 1.6;">
+          StockFlow empowers supermarkets, convenience stores, and retail managers to monitor inventory in real time, record precision stock movements, prevent painful stockouts with automated threshold alerts, and make confident commercial decisions.
+        </p>
+        <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start gap-3">
+          {% if user.is_authenticated %}
+            <a href="{% url 'dashboard' %}" class="btn btn-success btn-lg px-4 fw-semibold shadow d-flex align-items-center gap-2">
+              <i class="bi bi-speedometer2"></i>
+              <span>Access Control Dashboard</span>
+            </a>
+          {% else %}
+            <a href="{% url 'login' %}" class="btn btn-success btn-lg px-4 fw-semibold shadow d-flex align-items-center gap-2">
+              <i class="bi bi-box-arrow-in-right"></i>
+              <span>Sign In to System</span>
+            </a>
+            <a href="#features" class="btn btn-outline-light btn-lg px-4 fw-semibold">
+              Explore Features
+            </a>
+          {% endif %}
+        </div>
+        
+        <!-- Trust Proof Metrics -->
+        <div class="row mt-5 pt-3 border-top border-white border-opacity-10 text-center text-sm-start g-3">
+          <div class="col-4">
+            <div class="h4 fw-bold text-white mb-0">100%</div>
+            <small class="text-white-50">Audit Traceability</small>
+          </div>
+          <div class="col-4">
+            <div class="h4 fw-bold text-white mb-0">Real-Time</div>
+            <small class="text-white-50">Threshold Alerts</small>
+          </div>
+          <div class="col-4">
+            <div class="h4 fw-bold text-white mb-0">Zero</div>
+            <small class="text-white-50">Negative Stock Drift</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-5">
+        <!-- Visual App Preview Card -->
+        <div class="card bg-white text-dark rounded-4 shadow-2-strong border-0 overflow-hidden" style="box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);">
+          <div class="p-3 bg-light border-bottom d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+              <span class="rounded-circle bg-danger" style="width: 10px; height: 10px;"></span>
+              <span class="rounded-circle bg-warning" style="width: 10px; height: 10px;"></span>
+              <span class="rounded-circle bg-success" style="width: 10px; height: 10px;"></span>
+            </div>
+            <span class="badge bg-dark text-white font-monospace" style="font-size: 0.72rem;">STOCKFLOW v1.0</span>
+          </div>
+          <div class="p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <div class="text-muted small text-uppercase fw-semibold">Inventory Health</div>
+                <h5 class="fw-bold mb-0">Store Stock Overview</h5>
+              </div>
+              <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Operational</span>
+            </div>
+            <!-- Interactive visual miniature -->
+            <div class="p-3 bg-light rounded-3 border mb-3">
+              <div class="d-flex justify-content-between small text-muted mb-1">
+                <span>Stock Distribution</span>
+                <span class="fw-semibold text-dark">92% Healthy</span>
+              </div>
+              <div class="progress" style="height: 10px;">
+                <div class="progress-bar bg-success" style="width: 65%;"></div>
+                <div class="progress-bar bg-warning" style="width: 20%;"></div>
+                <div class="progress-bar bg-danger" style="width: 15%;"></div>
+              </div>
+            </div>
+            <!-- Alert Demo -->
+            <div class="alert alert-warning py-2 px-3 small d-flex align-items-center gap-2 mb-3 border-warning">
+              <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+              <div><strong>Low Stock Warning:</strong> Sliced White Bread (3 units left)</div>
+            </div>
+            <div class="d-grid">
+              <a href="{% url 'login' %}" class="btn btn-outline-dark fw-medium btn-sm">
+                Launch Live Environment &rarr;
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-5 bg-white">
+  <div class="container py-4">
+    <div class="text-center max-w-700 mx-auto mb-5">
+      <span class="text-success fw-bold text-uppercase" style="font-size: 0.8rem; letter-spacing: 0.08em;">End-to-End Capabilities</span>
+      <h2 class="display-6 fw-bold mt-1 text-dark">Built Specifically for Modern Retailers</h2>
+      <p class="text-muted">Say goodbye to handwritten ledger books and error-prone spreadsheets.</p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon-wrapper text-primary bg-primary-subtle">
+            <i class="bi bi-box-seam"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">Inventory Management</h5>
+          <p class="text-muted small mb-0">Create, edit, and categorize products with detailed SKU barcodes, pricing, and minimum/maximum stock boundaries.</p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon-wrapper text-success bg-success-subtle">
+            <i class="bi bi-arrow-down-up"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">Stock Movement Engine</h5>
+          <p class="text-muted small mb-0">Record atomic Stock IN, Stock OUT, and physical audit adjustments. Every change prevents negative stock and updates the ledger.</p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon-wrapper text-warning bg-warning-subtle">
+            <i class="bi bi-bell"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">Smart Alerts & Notifications</h5>
+          <p class="text-muted small mb-0">Automatically alerts managers the instant a product crosses from healthy into low-stock or completely out-of-stock states.</p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon-wrapper text-info bg-info-subtle">
+            <i class="bi bi-truck"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">Supplier Management</h5>
+          <p class="text-muted small mb-0">Manage vendor contact profiles, track supply lines, and instantly view all product lines sourced from each distributor.</p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon-wrapper text-secondary bg-secondary-subtle">
+            <i class="bi bi-clock-history"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">Immutable Audit History</h5>
+          <p class="text-muted small mb-0">Every single inventory change records who, when, how much, and why. Ensure complete accountability across staff shifts.</p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon-wrapper text-danger bg-danger-subtle">
+            <i class="bi bi-graph-up-arrow"></i>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">Reports & Valuation</h5>
+          <p class="text-muted small mb-0">Calculate total retail inventory valuation, track category-by-category asset distribution, and export clean CSV reports.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How It Works Section -->
+<section id="how-it-works" class="py-5" style="background-color: var(--sf-bg);">
+  <div class="container py-4">
+    <div class="text-center mb-5">
+      <span class="text-success fw-bold text-uppercase" style="font-size: 0.8rem; letter-spacing: 0.08em;">Operational Flow</span>
+      <h2 class="display-6 fw-bold mt-1 text-dark">How StockFlow Works</h2>
+      <p class="text-muted">A streamlined 4-step workflow that keeps your store shelf-ready.</p>
+    </div>
+
+    <div class="row g-4 text-center">
+      <div class="col-md-6 col-lg-3">
+        <div class="p-4 bg-white rounded-4 border h-100 shadow-sm">
+          <div class="rounded-circle bg-dark text-white fw-bold d-inline-flex align-items-center justify-content-center mb-3" style="width: 44px; height: 44px; font-size: 1.1rem;">
+            1
+          </div>
+          <h5 class="fw-bold mb-2">Add Products</h5>
+          <p class="text-muted small mb-0">Register your inventory catalog with custom SKU identifiers, pricing, and minimum stock alert levels.</p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-3">
+        <div class="p-4 bg-white rounded-4 border h-100 shadow-sm">
+          <div class="rounded-circle bg-dark text-white fw-bold d-inline-flex align-items-center justify-content-center mb-3" style="width: 44px; height: 44px; font-size: 1.1rem;">
+            2
+          </div>
+          <h5 class="fw-bold mb-2">Track Stock</h5>
+          <p class="text-muted small mb-0">Record incoming supplier shipments (Stock IN) and counter dispatch sales (Stock OUT) with transactional guarantees.</p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-3">
+        <div class="p-4 bg-white rounded-4 border h-100 shadow-sm">
+          <div class="rounded-circle bg-dark text-white fw-bold d-inline-flex align-items-center justify-content-center mb-3" style="width: 44px; height: 44px; font-size: 1.1rem;">
+            3
+          </div>
+          <h5 class="fw-bold mb-2">Receive Alerts</h5>
+          <p class="text-muted small mb-0">When items drop below safety thresholds, automatic in-app alerts notify store managers before stockouts occur.</p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-3">
+        <div class="p-4 bg-white rounded-4 border h-100 shadow-sm">
+          <div class="rounded-circle bg-dark text-white fw-bold d-inline-flex align-items-center justify-content-center mb-3" style="width: 44px; height: 44px; font-size: 1.1rem;">
+            4
+          </div>
+          <h5 class="fw-bold mb-2">Better Decisions</h5>
+          <p class="text-muted small mb-0">Analyze inventory valuation, optimize reorder timing, and minimize dead stock across all departments.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Benefits Section -->
+<section id="benefits" class="py-5 bg-white">
+  <div class="container py-4">
+    <div class="row align-items-center gy-4">
+      <div class="col-lg-6">
+        <span class="text-success fw-bold text-uppercase" style="font-size: 0.8rem; letter-spacing: 0.08em;">Store Impact</span>
+        <h2 class="display-6 fw-bold mt-1 text-dark mb-4">Why Supermarkets Choose StockFlow</h2>
+        
+        <div class="d-flex gap-3 mb-4">
+          <div class="text-success fs-4"><i class="bi bi-shield-slash-fill"></i></div>
+          <div>
+            <h5 class="fw-bold mb-1">Reduce Costly Stockouts</h5>
+            <p class="text-muted small mb-0">Never disappoint a customer with empty shelves. Real-time notifications tell you precisely when to reorder.</p>
+          </div>
+        </div>
+
+        <div class="d-flex gap-3 mb-4">
+          <div class="text-success fs-4"><i class="bi bi-eye-fill"></i></div>
+          <div>
+            <h5 class="fw-bold mb-1">Total Inventory Visibility</h5>
+            <p class="text-muted small mb-0">Know exact quantities, shelf status, and asset valuation in seconds from an executive dashboard.</p>
+          </div>
+        </div>
+
+        <div class="d-flex gap-3 mb-4">
+          <div class="text-success fs-4"><i class="bi bi-person-check-fill"></i></div>
+          <div>
+            <h5 class="fw-bold mb-1">Strengthen Staff Accountability</h5>
+            <p class="text-muted small mb-0">Every stock in, out, and adjustment is permanently tied to the staff member who performed it.</p>
+          </div>
+        </div>
+
+        <div class="d-flex gap-3">
+          <div class="text-success fs-4"><i class="bi bi-journal-x"></i></div>
+          <div>
+            <h5 class="fw-bold mb-1">Replace Error-Prone Manual Records</h5>
+            <p class="text-muted small mb-0">Eliminate lost paper invoices, math discrepancies, and unauthorized stock shrinkage.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="p-5 rounded-4 text-white" style="background-color: var(--sf-navy); border: 1px solid rgba(255, 255, 255, 0.1);">
+          <i class="bi bi-quote fs-1 text-success opacity-75"></i>
+          <p class="lead mb-4" style="font-style: italic; line-height: 1.6;">
+            "StockFlow transformed our supermarket's operations. Our stockouts dropped significantly in our first month, and our managers know exactly what is on every shelf."
+          </p>
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-success text-white fw-bold d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+              JM
+            </div>
+            <div>
+              <div class="fw-bold">James Mwangi</div>
+              <small class="text-white-50">General Manager, Metro Supermarket</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Call to Action Section -->
+<section class="py-5" style="background: linear-gradient(135deg, #181d2e 0%, #3c453e 100%); color: #ffffff;">
+  <div class="container py-4 text-center">
+    <h2 class="display-6 fw-bold mb-3 text-white">Ready to Take Complete Control of Your Stock?</h2>
+    <p class="lead text-light opacity-90 max-w-700 mx-auto mb-4">
+      Log into StockFlow today to experience smart automated inventory tracking and immediate stock visibility.
+    </p>
+    <a href="{% url 'login' %}" class="btn btn-success btn-lg px-5 fw-semibold shadow">
+      Access StockFlow Now &rarr;
+    </a>
+  </div>
+</section>
+
+<!-- Public Footer -->
+<footer class="py-5 bg-dark text-white border-top border-secondary border-opacity-25" style="background-color: #101420 !important;">
+  <div class="container">
+    <div class="row g-4 justify-content-between">
+      <div class="col-lg-4">
+        <a class="d-flex align-items-center gap-2 fw-bold text-white fs-4 text-decoration-none mb-3" href="{% url 'home' %}">
+          <span class="d-inline-flex align-items-center justify-content-center bg-success text-white rounded-3 p-2" style="width: 34px; height: 34px;">
+            <i class="bi bi-boxes fs-5"></i>
+          </span>
+          <span>Stock<span class="text-success">Flow</span></span>
+        </a>
+        <p class="text-white-50 small mb-3">
+          Smart Inventory & Stock Management Platform designed for supermarkets, retail chains, and convenience stores.
+        </p>
+      </div>
+
+      <div class="col-6 col-lg-2">
+        <h6 class="text-white fw-semibold mb-3">Product</h6>
+        <ul class="list-unstyled text-white-50 small d-flex flex-column gap-2">
+          <li><a href="#features" class="text-white-50 text-decoration-none">Features</a></li>
+          <li><a href="#how-it-works" class="text-white-50 text-decoration-none">How It Works</a></li>
+          <li><a href="#benefits" class="text-white-50 text-decoration-none">Benefits</a></li>
+        </ul>
+      </div>
+
+      <div class="col-6 col-lg-2">
+        <h6 class="text-white fw-semibold mb-3">System</h6>
+        <ul class="list-unstyled text-white-50 small d-flex flex-column gap-2">
+          <li><a href="{% url 'login' %}" class="text-white-50 text-decoration-none">Staff Login</a></li>
+          <li><a href="{% url 'dashboard' %}" class="text-white-50 text-decoration-none">Dashboard</a></li>
+          <li><span class="text-success">Live Status: Operational</span></li>
+        </ul>
+      </div>
+
+      <div class="col-lg-3">
+        <h6 class="text-white fw-semibold mb-3">Support</h6>
+        <p class="text-white-50 small mb-2">Technical and deployment assistance for retail operations.</p>
+        <span class="badge bg-secondary">MVP Release 2026</span>
+      </div>
+    </div>
+
+    <div class="mt-5 pt-3 border-top border-secondary border-opacity-25 text-center text-white-50 small">
+      &copy; 2026 StockFlow. All rights reserved. Built with Django and modern enterprise web standards.
+    </div>
+  </div>
+</footer>
+{% endblock %}
