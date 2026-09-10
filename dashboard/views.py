@@ -8,15 +8,21 @@ from stock.models import StockMovement
 
 @login_required
 def dashboard_view(request):
+    shop = getattr(request.user, 'shop', None)
+    products = Product.objects.filter(shop=shop) if shop else Product.objects.all()
+    movements = StockMovement.objects.filter(shop=shop) if shop else StockMovement.objects.all()
+    categories = Category.objects.filter(shop=shop) if shop else Category.objects.all()
+    suppliers = Supplier.objects.filter(shop=shop) if shop else Supplier.objects.all()
+
     # Core KPI Metrics (all real database calculations)
-    total_products = Product.objects.count()
-    total_stock = Product.objects.aggregate(total=Sum('quantity'))['total'] or 0
-    out_of_stock_count = Product.objects.filter(quantity=0).count()
-    low_stock_count = Product.objects.filter(quantity__gt=0, quantity__lte=F('minimum_stock')).count()
-    in_stock_count = Product.objects.filter(quantity__gt=F('minimum_stock')).count()
+    total_products = products.count()
+    total_stock = products.aggregate(total=Sum('quantity'))['total'] or 0
+    out_of_stock_count = products.filter(quantity=0).count()
+    low_stock_count = products.filter(quantity__gt=0, quantity__lte=F('minimum_stock')).count()
+    in_stock_count = products.filter(quantity__gt=F('minimum_stock')).count()
 
     # Total inventory valuation: sum(price * quantity)
-    inventory_val = Product.objects.aggregate(
+    inventory_val = products.aggregate(
         total_val=Sum(F('price') * F('quantity'))
     )['total_val'] or Decimal('0.00')
 
@@ -31,10 +37,10 @@ def dashboard_view(request):
         out_of_stock_pct = 0
 
     # Recent stock activity (audit trail)
-    recent_movements = StockMovement.objects.select_related('product', 'user').order_by('-created_at')[:8]
+    recent_movements = movements.select_related('product', 'user').order_by('-created_at')[:8]
 
     # Attention Required: Products that are OUT_OF_STOCK or LOW_STOCK
-    attention_products = Product.objects.filter(
+    attention_products = products.filter(
         quantity__lte=F('minimum_stock')
     ).select_related('category', 'supplier').order_by('quantity')[:8]
 
@@ -50,8 +56,8 @@ def dashboard_view(request):
         'out_of_stock_pct': out_of_stock_pct,
         'recent_movements': recent_movements,
         'attention_products': attention_products,
-        'categories_count': Category.objects.count(),
-        'suppliers_count': Supplier.objects.count(),
+        'categories_count': categories.count(),
+        'suppliers_count': suppliers.count(),
         'stock_in_form': StockInForm(),
         'stock_out_form': StockOutForm(),
     }

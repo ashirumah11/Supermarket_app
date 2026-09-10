@@ -2,7 +2,8 @@ from .models import StoreSetting
 
 def auth_context(request):
     """Context processor providing role-based flags and supermarket store identity to templates."""
-    store_setting = StoreSetting.get_settings()
+    user = getattr(request, 'user', None)
+    store_setting = StoreSetting.get_settings(user)
     
     base_context = {
         'store_setting': store_setting,

@@ -1,47 +1,58 @@
 {% extends 'base.html' %}
 
-{% block title %}Sign In — StockFlow Management{% endblock %}
+{% block title %}{% if active_tab == 'signup' %}Create Account — StockFlow Management{% else %}Sign In — StockFlow Management{% endif %}{% endblock %}
 
 {% block content %}
 <div class="container-fluid min-vh-100 p-0 d-flex align-items-stretch" style="background-color: var(--sf-bg);">
   <div class="row g-0 w-100 min-vh-100">
-    <!-- Left Showcase Column (Hidden on mobile) -->
-    <div class="col-lg-6 d-none d-lg-flex flex-column justify-content-between p-5 text-white position-relative" style="background: linear-gradient(135deg, #181d2e 0%, #22293e 60%, #3c453e 100%);">
-      <!-- Decorative background blur -->
-      <div style="position: absolute; width: 400px; height: 400px; top: 10%; left: 10%; background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%); border-radius: 50%;"></div>
 
-      <!-- Top Branding -->
+    <!-- ============================================================
+         Left Showcase Column (Hidden on mobile)
+    ============================================================ -->
+    <div class="col-lg-6 d-none d-lg-flex flex-column justify-content-between p-5 text-white position-relative"
+         style="background: linear-gradient(135deg, #181d2e 0%, #22293e 60%, #3c453e 100%);">
+
+      <div style="position: absolute; width: 400px; height: 400px; top: 10%; left: 10%;
+                  background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
+                  border-radius: 50%; pointer-events: none;"></div>
+
+      <!-- Branding -->
       <div class="d-flex align-items-center gap-2 z-1">
-        <span class="d-inline-flex align-items-center justify-content-center bg-success text-white rounded-3 p-2" style="width: 40px; height: 40px;">
+        <span class="d-inline-flex align-items-center justify-content-center bg-success text-white rounded-3 p-2"
+              style="width: 40px; height: 40px;">
           <i class="bi bi-boxes fs-4"></i>
         </span>
         <span class="fs-4 fw-bold text-white">Stock<span class="text-success">Flow</span></span>
       </div>
 
-      <!-- Center Showcase Content -->
-      <div class="my-auto py-5 z-1" style="max-width: 480px;">
-        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill mb-3">Enterprise Ready</span>
+      <!-- Hero text — switches based on active tab -->
+      <div class="my-auto py-5 z-1 {% if active_tab == 'signup' %}d-none{% endif %}" style="max-width: 480px;" id="showcaseSignIn">
+        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill mb-3">
+          Enterprise Ready
+        </span>
         <h2 class="display-6 fw-bold mb-3 text-white">Precision Inventory Control for Modern Retail</h2>
         <p class="text-light opacity-75 fs-6 mb-4" style="line-height: 1.6;">
-          Real-time stock ledger, automated threshold monitoring, and role-based staff authorization engineered to eliminate stockouts.
+          Real-time stock ledger, automated threshold monitoring, and role-based staff authorization
+          engineered to eliminate stockouts.
         </p>
-
-        <!-- Mini Feature Highlights -->
         <div class="d-flex flex-column gap-3">
           <div class="d-flex align-items-center gap-3">
-            <div class="rounded-circle bg-success bg-opacity-20 text-success p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+            <div class="rounded-circle bg-success bg-opacity-20 text-success p-2 d-flex align-items-center justify-content-center"
+                 style="width: 32px; height: 32px; flex-shrink: 0;">
               <i class="bi bi-check2"></i>
             </div>
-            <span class="text-white-50 small">Automatic Low & Out-of-Stock Alerts</span>
+            <span class="text-white-50 small">Automatic Low &amp; Out-of-Stock Alerts</span>
           </div>
           <div class="d-flex align-items-center gap-3">
-            <div class="rounded-circle bg-success bg-opacity-20 text-success p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+            <div class="rounded-circle bg-success bg-opacity-20 text-success p-2 d-flex align-items-center justify-content-center"
+                 style="width: 32px; height: 32px; flex-shrink: 0;">
               <i class="bi bi-check2"></i>
             </div>
             <span class="text-white-50 small">Strict Non-Negative Stock Protection</span>
           </div>
           <div class="d-flex align-items-center gap-3">
-            <div class="rounded-circle bg-success bg-opacity-20 text-success p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+            <div class="rounded-circle bg-success bg-opacity-20 text-success p-2 d-flex align-items-center justify-content-center"
+                 style="width: 32px; height: 32px; flex-shrink: 0;">
               <i class="bi bi-check2"></i>
             </div>
             <span class="text-white-50 small">Complete Audit Trail for Every Unit Movement</span>
@@ -49,137 +60,516 @@
         </div>
       </div>
 
-      <!-- Bottom Status -->
+      <!-- Sign Up showcase text (shown when Sign Up tab is active) -->
+      <div class="my-auto py-5 z-1 {% if active_tab != 'signup' %}d-none{% endif %}" style="max-width: 480px;" id="showcaseSignUp">
+        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill mb-3">
+          Get Started
+        </span>
+        <h2 class="display-6 fw-bold mb-3 text-white">Join the StockFlow Platform</h2>
+        <p class="text-light opacity-75 fs-6 mb-4" style="line-height: 1.7;">
+          Register a new Administrator account to launch your dedicated supermarket inventory, precision ledger, and team workspace.
+        </p>
+        <div class="d-flex flex-column gap-3">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-success bg-opacity-20 text-success p-2 d-flex align-items-center justify-content-center"
+                 style="width: 32px; height: 32px; flex-shrink: 0;">
+              <i class="bi bi-speedometer2"></i>
+            </div>
+            <span class="text-white-50 small">Independent store setup with dedicated inventory</span>
+          </div>
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-success bg-opacity-20 text-success p-2 d-flex align-items-center justify-content-center"
+                 style="width: 32px; height: 32px; flex-shrink: 0;">
+              <i class="bi bi-bell-fill"></i>
+            </div>
+            <span class="text-white-50 small">Automated low-stock and reorder threshold alerts</span>
+          </div>
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-success bg-opacity-20 text-success p-2 d-flex align-items-center justify-content-center"
+                 style="width: 32px; height: 32px; flex-shrink: 0;">
+              <i class="bi bi-shield-check"></i>
+            </div>
+            <span class="text-white-50 small">Strict non-negative ledger &amp; comprehensive audit trail</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
       <div class="d-flex justify-content-between align-items-center text-white-50 small z-1 pt-4 border-top border-white border-opacity-10">
         <span>&copy; 2026 StockFlow System</span>
         <span class="text-success"><i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i> All systems operational</span>
       </div>
     </div>
 
-    <!-- Right Login Form Column -->
+    <!-- ============================================================
+         Right Column — Tab-switched Sign In / Sign Up
+    ============================================================ -->
     <div class="col-lg-6 d-flex flex-column justify-content-center align-items-center p-4 p-md-5">
-      <div class="w-100" style="max-width: 440px;">
+      <div class="w-100" style="max-width: 480px;">
+
         <!-- Mobile Logo -->
         <div class="d-lg-none text-center mb-4">
           <a href="{% url 'home' %}" class="d-inline-flex align-items-center gap-2 fw-bold fs-3 text-dark text-decoration-none">
-            <span class="d-inline-flex align-items-center justify-content-center bg-success text-white rounded-3 p-2" style="width: 36px; height: 36px;">
+            <span class="d-inline-flex align-items-center justify-content-center bg-success text-white rounded-3 p-2"
+                  style="width: 36px; height: 36px;">
               <i class="bi bi-boxes fs-5"></i>
             </span>
             <span>Stock<span class="text-success">Flow</span></span>
           </a>
         </div>
 
-        <div class="mb-4">
-          <h2 class="h3 fw-bold text-dark mb-1">Welcome back</h2>
-          <p class="text-muted small">Enter your credentials to access your store inventory dashboard.</p>
+        <!-- ── Tab Switcher ─────────────────────────────────────── -->
+        <div class="d-flex rounded-3 p-1 mb-4" style="background: #f0f2f5; gap: 4px;">
+          <button id="tabSignIn" type="button" onclick="switchTab('signin')"
+                  class="flex-grow-1 btn fw-semibold py-2 rounded-2 tab-auth-btn {% if active_tab != 'signup' %}active{% endif %}"
+                  style="font-size: 0.925rem;">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+          </button>
+          <button id="tabSignUp" type="button" onclick="switchTab('signup')"
+                  class="flex-grow-1 btn fw-semibold py-2 rounded-2 tab-auth-btn {% if active_tab == 'signup' %}active{% endif %}"
+                  style="font-size: 0.925rem;">
+            <i class="bi bi-person-plus-fill me-2"></i>Sign Up
+          </button>
         </div>
 
-        <!-- Login Form -->
-        <form method="post" action="{% url 'login' %}">
-          {% csrf_token %}
+        <!-- ── Flash Messages ─────────────────────────────────────── -->
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show py-2 small rounded-3 mb-3" role="alert">
+              {% if message.tags == 'success' %}
+                <i class="bi bi-check-circle-fill me-2"></i>
+              {% elif message.tags == 'danger' %}
+                <i class="bi bi-exclamation-circle-fill me-2"></i>
+              {% else %}
+                <i class="bi bi-info-circle-fill me-2"></i>
+              {% endif %}
+              {{ message }}
+              <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
 
-          {% if form.non_field_errors %}
-            <div class="alert alert-danger py-2 small mb-3">
-              {% for error in form.non_field_errors %}
-                <div><i class="bi bi-exclamation-circle-fill me-1"></i> {{ error }}</div>
+        <!-- ══════════════════════════════════════════════════════
+             SIGN IN PANEL
+        ══════════════════════════════════════════════════════ -->
+        <div id="panelSignIn" class="{% if active_tab == 'signup' %}d-none{% endif %}">
+          <!-- ── Account Created Successfully Banner ────────────── -->
+          {% if registered %}
+            <div class="card border-0 rounded-3 shadow-sm mb-4" id="regSuccessCard"
+                 style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-left: 4px solid #10b981 !important;">
+              <div class="card-body p-3 p-md-4">
+                <div class="d-flex align-items-start gap-3">
+                  <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center flex-shrink-0"
+                       style="width: 38px; height: 38px;">
+                    <i class="bi bi-check-lg fs-5"></i>
+                  </div>
+                  <div class="flex-grow-1">
+                    <h5 class="fw-bold text-success mb-1">Account created successfully!</h5>
+                    <p class="text-dark small mb-3 opacity-85">
+                      Your store administrator account has been registered. Sign in below to access your dashboard.
+                    </p>
+                    <button type="button" class="btn btn-success fw-semibold px-3 py-2 btn-sm shadow-sm"
+                            onclick="goToSignIn();">
+                      <i class="bi bi-box-arrow-in-right me-1"></i>Go to Sign In
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+
+          <div class="mb-4">
+            <h2 class="h4 fw-bold text-dark mb-1">Welcome back</h2>
+            <p class="text-muted small mb-0">Enter your credentials to access your store inventory dashboard.</p>
+          </div>
+
+          <form method="post" action="{% url 'login' %}" id="loginForm" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger py-2 small mb-3 rounded-3" role="alert">
+                {% for error in form.non_field_errors %}
+                  <div><i class="bi bi-exclamation-circle-fill me-1"></i>{{ error }}</div>
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            <div class="mb-3">
+              <label for="username_field" class="form-label fw-semibold text-dark small">Username or Email</label>
+              {{ form.username }}
+              {% if form.username.errors %}
+                <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <div class="mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label for="password_field" class="form-label fw-semibold text-dark small mb-0">Password</label>
+                <button type="button" class="btn btn-link p-0 text-muted small text-decoration-none"
+                        onclick="togglePasswordVisibility()">
+                  <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                  <span id="togglePasswordText">Show</span>
+                </button>
+              </div>
+              {{ form.password }}
+              {% if form.password.errors %}
+                <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <div class="form-check">
+                {{ form.remember_me }}
+                <label class="form-check-label small text-muted" for="rememberMeCheck">
+                  Remember this device
+                </label>
+              </div>
+              <a href="{% url 'forgot_password' %}" class="small text-decoration-none fw-semibold text-success">
+                Forgot Password?
+              </a>
+            </div>
+
+            <div class="d-grid mb-4">
+              <button type="submit" class="btn btn-sf-primary btn-lg fw-semibold shadow-sm" id="signInBtn">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Sign In to StockFlow
+              </button>
+            </div>
+          </form>
+
+          <p class="text-center text-muted small mb-3">
+            Don't have an account?
+            <a href="#" onclick="switchTab('signup'); return false;"
+               class="fw-semibold text-decoration-none text-success">Sign Up</a>
+          </p>
+
+          <!-- Quick Demo Switcher -->
+          <div class="p-3 bg-white rounded-3 border">
+            <div class="text-muted small fw-semibold text-uppercase mb-2 text-center"
+                 style="font-size: 0.72rem; letter-spacing: 0.05em;">
+              1-Click Demo Credentials
+            </div>
+            <div class="row g-2">
+              <div class="col-4">
+                <button type="button" class="btn btn-sm btn-outline-dark w-100 py-1"
+                        onclick="fillCredentials('john_kamau', 'AdminPass123!')" title="Fill Admin details">
+                  <span class="d-block fw-bold" style="font-size: 0.78rem;">Admin</span>
+                  <span class="badge badge-admin mt-1" style="font-size: 0.65rem;">ADMIN</span>
+                </button>
+              </div>
+              <div class="col-4">
+                <button type="button" class="btn btn-sm btn-outline-dark w-100 py-1"
+                        onclick="fillCredentials('mary_wanjiku', 'ManagerPass123!')" title="Fill Manager details">
+                  <span class="d-block fw-bold" style="font-size: 0.78rem;">Manager</span>
+                  <span class="badge badge-manager mt-1" style="font-size: 0.65rem;">MANAGER</span>
+                </button>
+              </div>
+              <div class="col-4">
+                <button type="button" class="btn btn-sm btn-outline-dark w-100 py-1"
+                        onclick="fillCredentials('brian_otieno', 'StaffPass123!')" title="Fill Staff details">
+                  <span class="d-block fw-bold" style="font-size: 0.78rem;">Staff</span>
+                  <span class="badge badge-staff mt-1" style="font-size: 0.65rem;">STAFF</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div><!-- /panelSignIn -->
+
+        <!-- ══════════════════════════════════════════════════════
+             SIGN UP PANEL
+        ══════════════════════════════════════════════════════ -->
+        <div id="panelSignUp" class="{% if active_tab != 'signup' %}d-none{% endif %}">
+
+          <div class="mb-4">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 small">
+                <i class="bi bi-person-plus-fill me-1"></i>New Shop Account
+              </span>
+            </div>
+            <h2 class="h4 fw-bold text-dark mb-1">Create Your Account</h2>
+            <p class="text-muted small mb-0">
+              Register a new Admin account and launch your dedicated store inventory system.
+            </p>
+          </div>
+
+          {% if reg_form.non_field_errors %}
+            <div class="alert alert-danger py-2 small mb-3 rounded-3" role="alert">
+              {% for error in reg_form.non_field_errors %}
+                <div><i class="bi bi-exclamation-circle-fill me-1"></i>{{ error }}</div>
               {% endfor %}
             </div>
           {% endif %}
 
-          <div class="mb-3">
-            <label for="username_field" class="form-label fw-semibold text-dark small">Username or Email</label>
-            {{ form.username }}
-            {% if form.username.errors %}
-              <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
-            {% endif %}
-          </div>
+          <form method="post" action="{% url 'register' %}" id="registerForm" novalidate>
+            {% csrf_token %}
 
-          <div class="mb-3">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-              <label for="password_field" class="form-label fw-semibold text-dark small mb-0">Password</label>
-              <button type="button" class="btn btn-link p-0 text-muted small text-decoration-none" id="togglePasswordBtn" onclick="togglePasswordVisibility()">
-                <i class="bi bi-eye" id="togglePasswordIcon"></i> <span id="togglePasswordText">Show</span>
-              </button>
+            <!-- Name row -->
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label for="{{ reg_form.first_name.id_for_label }}" class="form-label fw-semibold text-dark small">
+                  First Name <span class="text-danger">*</span>
+                </label>
+                {{ reg_form.first_name }}
+                {% if reg_form.first_name.errors %}
+                  <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ reg_form.first_name.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                <label for="{{ reg_form.last_name.id_for_label }}" class="form-label fw-semibold text-dark small">
+                  Last Name <span class="text-danger">*</span>
+                </label>
+                {{ reg_form.last_name }}
+                {% if reg_form.last_name.errors %}
+                  <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ reg_form.last_name.errors.0 }}</div>
+                {% endif %}
+              </div>
             </div>
-            {{ form.password }}
-            {% if form.password.errors %}
-              <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
-            {% endif %}
-          </div>
 
-          <div class="d-flex justify-content-between align-items-center mb-4">
-            <div class="form-check">
-              {{ form.remember_me }}
-              <label class="form-check-label small text-muted" for="rememberMeCheck">
-                Remember this device
+            <!-- Email / Username -->
+            <div class="mb-3">
+              <label for="{{ reg_form.email.id_for_label }}" class="form-label fw-semibold text-dark small">
+                Email / Username <span class="text-danger">*</span>
               </label>
+              {{ reg_form.email }}
+              {% if reg_form.email.errors %}
+                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ reg_form.email.errors.0 }}</div>
+              {% endif %}
+              <div class="form-text small text-muted">
+                Used as your login email or username.
+              </div>
             </div>
-            <a href="{% url 'home' %}" class="small text-decoration-none text-muted">
-              &larr; Back to Home
-            </a>
-          </div>
 
-          <div class="d-grid mb-4">
-            <button type="submit" class="btn btn-sf-primary btn-lg fw-semibold shadow-sm">
-              Sign In to StockFlow
-            </button>
-          </div>
-        </form>
+            <!-- Shop / Supermarket Name -->
+            <div class="mb-3">
+              <label for="{{ reg_form.shop_name.id_for_label }}" class="form-label fw-semibold text-dark small">
+                Supermarket / Shop Name <span class="text-muted fw-normal">(Optional)</span>
+              </label>
+              {{ reg_form.shop_name }}
+              {% if reg_form.shop_name.errors %}
+                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ reg_form.shop_name.errors.0 }}</div>
+              {% endif %}
+              <div class="form-text small text-muted">
+                Enter your supermarket name, or leave blank to use default.
+              </div>
+            </div>
 
-        <!-- Quick Demo Switcher (Helps evaluator/tester quickly test all 3 roles!) -->
-        <div class="p-3 bg-white rounded-3 border">
-          <div class="text-muted small fw-semibold text-uppercase mb-2 text-center" style="font-size: 0.72rem; letter-spacing: 0.05em;">
-            1-Click Demo Credentials
-          </div>
-          <div class="row g-2">
-            <div class="col-4">
-              <button type="button" class="btn btn-sm btn-outline-dark w-100 py-1" onclick="fillCredentials('admin', 'AdminPass123!')" title="Fill Admin details">
-                <span class="d-block fw-bold" style="font-size: 0.78rem;">Admin</span>
-                <span class="badge badge-admin mt-1" style="font-size: 0.65rem;">ADMIN</span>
+            <!-- Password -->
+            <div class="mb-3">
+              <label for="{{ reg_form.password.id_for_label }}" class="form-label fw-semibold text-dark small">
+                Password <span class="text-danger">*</span>
+              </label>
+              <div class="input-group">
+                {{ reg_form.password }}
+                <button type="button" class="btn btn-outline-secondary"
+                        onclick="togglePass('id_password', 'regPwIcon')" title="Toggle visibility">
+                  <i class="bi bi-eye" id="regPwIcon"></i>
+                </button>
+              </div>
+              {% if reg_form.password.errors %}
+                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ reg_form.password.errors.0 }}</div>
+              {% endif %}
+              <!-- Strength bar -->
+              <div class="mt-2" id="pwStrengthBar" style="display:none;">
+                <div class="progress" style="height: 4px;">
+                  <div class="progress-bar" id="pwStrength" role="progressbar" style="width: 0%; transition: width 0.3s;"></div>
+                </div>
+                <div class="form-text small mt-1" id="pwStrengthLabel"></div>
+              </div>
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="mb-4">
+              <label for="{{ reg_form.confirm_password.id_for_label }}" class="form-label fw-semibold text-dark small">
+                Confirm Password <span class="text-danger">*</span>
+              </label>
+              <div class="input-group">
+                {{ reg_form.confirm_password }}
+                <button type="button" class="btn btn-outline-secondary"
+                        onclick="togglePass('id_confirm_password', 'regCfIcon')" title="Toggle visibility">
+                  <i class="bi bi-eye" id="regCfIcon"></i>
+                </button>
+              </div>
+              {% if reg_form.confirm_password.errors %}
+                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ reg_form.confirm_password.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <div class="d-grid mb-3">
+              <button type="submit" class="btn btn-sf-primary btn-lg fw-semibold shadow-sm" id="signUpBtn">
+                <i class="bi bi-person-check-fill me-2"></i>Create Account
               </button>
             </div>
-            <div class="col-4">
-              <button type="button" class="btn btn-sm btn-outline-dark w-100 py-1" onclick="fillCredentials('manager', 'ManagerPass123!')" title="Fill Manager details">
-                <span class="d-block fw-bold" style="font-size: 0.78rem;">Manager</span>
-                <span class="badge badge-manager mt-1" style="font-size: 0.65rem;">MANAGER</span>
-              </button>
-            </div>
-            <div class="col-4">
-              <button type="button" class="btn btn-sm btn-outline-dark w-100 py-1" onclick="fillCredentials('staff', 'StaffPass123!')" title="Fill Staff details">
-                <span class="d-block fw-bold" style="font-size: 0.78rem;">Staff</span>
-                <span class="badge badge-staff mt-1" style="font-size: 0.65rem;">STAFF</span>
-              </button>
-            </div>
-          </div>
-        </div>
+          </form>
+
+          <p class="text-center text-muted small mt-3">
+            Already have an account?
+            <a href="#" onclick="switchTab('signin'); return false;"
+               class="fw-semibold text-decoration-none text-success">Sign In</a>
+          </p>
+
+        </div><!-- /panelSignUp -->
 
       </div>
     </div>
+    <!-- /Right Column -->
+
   </div>
 </div>
+
+<style>
+  .tab-auth-btn {
+    background: transparent;
+    color: #6b7280;
+    border: none;
+    transition: all 0.2s ease;
+  }
+  .tab-auth-btn.active {
+    background: #ffffff;
+    color: #111827;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+  }
+  .tab-auth-btn:hover:not(.active) {
+    color: #374151;
+    background: rgba(255,255,255,0.5);
+  }
+</style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-  function togglePasswordVisibility() {
-    const passwordInput = document.getElementById('password_field');
-    const toggleIcon = document.getElementById('togglePasswordIcon');
-    const toggleText = document.getElementById('togglePasswordText');
+  /* ── Tab switcher ─────────────────────────────────── */
+  function switchTab(tab) {
+    const isSignIn = tab === 'signin';
+    const panelSignIn = document.getElementById('panelSignIn');
+    const panelSignUp = document.getElementById('panelSignUp');
+    const tabSignIn = document.getElementById('tabSignIn');
+    const tabSignUp = document.getElementById('tabSignUp');
+    const showcaseSignIn = document.getElementById('showcaseSignIn');
+    const showcaseSignUp = document.getElementById('showcaseSignUp');
 
-    if (passwordInput.type === 'password') {
-      passwordInput.type = 'text';
-      toggleIcon.className = 'bi bi-eye-slash';
-      toggleText.textContent = 'Hide';
-    } else {
-      passwordInput.type = 'password';
-      toggleIcon.className = 'bi bi-eye';
-      toggleText.textContent = 'Show';
+    if (panelSignIn) panelSignIn.classList.toggle('d-none', !isSignIn);
+    if (panelSignUp) panelSignUp.classList.toggle('d-none', isSignIn);
+    if (tabSignIn) tabSignIn.classList.toggle('active', isSignIn);
+    if (tabSignUp) tabSignUp.classList.toggle('active', !isSignIn);
+    if (showcaseSignIn) showcaseSignIn.classList.toggle('d-none', !isSignIn);
+    if (showcaseSignUp) showcaseSignUp.classList.toggle('d-none', isSignIn);
+
+    document.title = isSignIn ? 'Sign In — StockFlow Management' : 'Create Account — StockFlow Management';
+
+    // Update URL query parameter cleanly without reloading
+    try {
+      const url = new URL(window.location.href);
+      if (isSignIn) {
+        url.searchParams.delete('tab');
+      } else {
+        url.searchParams.set('tab', 'signup');
+      }
+      window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+    } catch (e) {}
+  }
+
+  function goToSignIn() {
+    switchTab('signin');
+    const userField = document.getElementById('username_field');
+    if (userField) {
+      userField.focus();
+      userField.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }
 
+  /* Auto-open appropriate tab on load */
+  document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    const hasRegSuccess = urlParams.get('registered') === 'true';
+
+    // If registered successfully, always prioritize sign-in view
+    if (hasRegSuccess) {
+      switchTab('signin');
+      return;
+    }
+
+    if (tabParam === 'signup' || window.location.hash === '#signup' || {% if active_tab == 'signup' or reg_form.errors %}true{% else %}false{% endif %}) {
+      switchTab('signup');
+    } else if (tabParam === 'signin') {
+      switchTab('signin');
+    }
+  });
+
+  /* ── Password visibility toggle (sign in) ─────────── */
+  function togglePasswordVisibility() {
+    const inp = document.getElementById('password_field');
+    const icon = document.getElementById('togglePasswordIcon');
+    const txt = document.getElementById('togglePasswordText');
+    if (!inp || !icon) return;
+    if (inp.type === 'password') {
+      inp.type = 'text';
+      icon.className = 'bi bi-eye-slash';
+      if (txt) txt.textContent = 'Hide';
+    } else {
+      inp.type = 'password';
+      icon.className = 'bi bi-eye';
+      if (txt) txt.textContent = 'Show';
+    }
+  }
+
+  /* ── Password visibility toggle (sign up) ─────────── */
+  function togglePass(inputId, iconId) {
+    const inp = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (!inp || !icon) return;
+    if (inp.type === 'password') {
+      inp.type = 'text';
+      icon.className = 'bi bi-eye-slash';
+    } else {
+      inp.type = 'password';
+      icon.className = 'bi bi-eye';
+    }
+  }
+
+  /* ── Demo credential filler ───────────────────────── */
   function fillCredentials(username, password) {
-    document.getElementById('username_field').value = username;
-    document.getElementById('password_field').value = password;
+    const userField = document.getElementById('username_field');
+    const passField = document.getElementById('password_field');
+    if (userField) userField.value = username;
+    if (passField) passField.value = password;
+    switchTab('signin');
+  }
+
+  /* ── Password strength meter ──────────────────────── */
+  const pwInput = document.getElementById('id_password');
+  if (pwInput) {
+    pwInput.addEventListener('input', function () {
+      const bar = document.getElementById('pwStrength');
+      const label = document.getElementById('pwStrengthLabel');
+      const wrap = document.getElementById('pwStrengthBar');
+      if (!this.value) {
+        if (wrap) wrap.style.display = 'none';
+        return;
+      }
+      if (wrap) wrap.style.display = 'block';
+      let score = 0;
+      if (this.value.length >= 8) score++;
+      if (this.value.length >= 12) score++;
+      if (/[A-Z]/.test(this.value)) score++;
+      if (/[0-9]/.test(this.value)) score++;
+      if (/[^A-Za-z0-9]/.test(this.value)) score++;
+      const levels = [
+        { pct: 20, color: '#dc3545', text: 'Very weak' },
+        { pct: 40, color: '#fd7e14', text: 'Weak' },
+        { pct: 60, color: '#ffc107', text: 'Fair' },
+        { pct: 80, color: '#20c997', text: 'Strong' },
+        { pct: 100, color: '#198754', text: 'Very strong' },
+      ];
+      const lvl = levels[Math.min(score, levels.length) - 1] || levels[0];
+      if (bar) {
+        bar.style.width = lvl.pct + '%';
+        bar.style.backgroundColor = lvl.color;
+      }
+      if (label) {
+        label.textContent = lvl.text;
+        label.style.color = lvl.color;
+      }
+    });
   }
 </script>
 {% endblock %}

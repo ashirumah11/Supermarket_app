@@ -12,6 +12,14 @@ class StockMovementType(models.TextChoices):
 
 
 class StockTransfer(models.Model):
+    shop = models.ForeignKey(
+        'accounts.StoreSetting',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='transfers',
+        help_text="Shop or store organization this transfer belongs to"
+    )
     product = models.ForeignKey(
         'inventory.Product',
         on_delete=models.CASCADE,
@@ -64,6 +72,14 @@ class StockTransfer(models.Model):
 
 
 class StockMovement(models.Model):
+    shop = models.ForeignKey(
+        'accounts.StoreSetting',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='movements',
+        help_text="Shop or store organization this movement belongs to"
+    )
     product = models.ForeignKey(
         'inventory.Product',
         on_delete=models.CASCADE,

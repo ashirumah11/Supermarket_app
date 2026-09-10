@@ -1,29 +1,39 @@
+# StockFlow — Python / Django .gitignore
+
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+.Python
 
-# Virtual environment
-venv/
-.venv/
-env/
-
-# Environment variables / secrets
+# Environments
 .env
-.env.*
+.venv
+env/
+venv/
+ENV/
 
 # Django
-db.sqlite3
 *.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+/media/
+/staticfiles/
 
-# Static/media generated files
-staticfiles/
-media/
-
-# IDE / editor
-.vscode/
+# PyCharm / VSCode / IDEs
 .idea/
+.vscode/
+*.swp
+*.swo
 
-# OS files
+# OS
 .DS_Store
 Thumbs.db
+
+# Secrets — NEVER commit
+*.pem
+*.key
+*.p12
+secrets.py

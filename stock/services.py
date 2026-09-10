@@ -61,8 +61,10 @@ class StockMovementService:
             new_status = locked_product.stock_status
 
             # Record immutable audit movement
+            shop = locked_product.shop or getattr(user, 'shop', None)
             movement = StockMovement.objects.create(
                 product=locked_product,
+                shop=shop,
                 type=movement_type,
                 quantity=movement_delta,
                 previous_quantity=previous_quantity,
@@ -141,8 +143,10 @@ class StockTransferService:
             previous_status = product.stock_status
 
             # Create StockTransfer record
+            shop = product.shop or getattr(user, 'shop', None)
             transfer = StockTransfer.objects.create(
                 product=product,
+                shop=shop,
                 source_location=source_location,
                 destination_location=destination_location,
                 quantity=quantity,
@@ -154,6 +158,7 @@ class StockTransferService:
             # Create paired StockMovement audit records
             StockMovement.objects.create(
                 product=product,
+                shop=shop,
                 location=source_location,
                 destination_location=destination_location,
                 transfer=transfer,
@@ -168,6 +173,7 @@ class StockTransferService:
 
             StockMovement.objects.create(
                 product=product,
+                shop=shop,
                 location=destination_location,
                 destination_location=None,
                 transfer=transfer,

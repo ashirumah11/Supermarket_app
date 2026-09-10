@@ -89,6 +89,7 @@
           <div class="mt-1"><span class="badge {{ user.role_badge_class }}">{{ user.get_role_display }}</span></div>
         </li>
         <li><a class="dropdown-item py-2" href="{% url 'settings' %}"><i class="bi bi-person-gear me-2"></i>Account Settings</a></li>
+        <li><a class="dropdown-item py-2" href="{% url 'change_password' %}"><i class="bi bi-key me-2"></i>Change Password</a></li>
         {% if is_admin %}
           <li><a class="dropdown-item py-2" href="{% url 'user_list' %}"><i class="bi bi-shield-lock me-2"></i>User Access</a></li>
         {% endif %}

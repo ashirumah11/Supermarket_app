@@ -20,6 +20,15 @@ class StockTransferForm(forms.Form):
         widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_destination_location'}),
         label="Destination Location (Receive To)"
     )
+
+    def __init__(self, *args, shop=None, **kwargs):
+        self.shop = shop
+        super().__init__(*args, **kwargs)
+        if self.shop:
+            self.fields['product'].queryset = Product.objects.filter(shop=self.shop).order_by('name')
+            self.fields['source_location'].queryset = InventoryLocation.objects.filter(shop=self.shop, is_active=True).order_by('name')
+            self.fields['destination_location'].queryset = InventoryLocation.objects.filter(shop=self.shop, is_active=True).order_by('name')
+
     quantity = forms.IntegerField(
         min_value=1,
         widget=forms.NumberInput(attrs={
@@ -188,3 +197,10 @@ class StockMovementActionForm(forms.Form):
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Invoice, PO, or note'})
     )
+
+    def __init__(self, *args, shop=None, **kwargs):
+        self.shop = shop
+        super().__init__(*args, **kwargs)
+        if self.shop:
+            self.fields['product'].queryset = Product.objects.filter(shop=self.shop).order_by('name')
+

@@ -20,11 +20,20 @@ class ProductForm(forms.ModelForm):
             'maximum_stock': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'placeholder': '100'}),
         }
 
+    def __init__(self, *args, shop=None, **kwargs):
+        self.shop = shop
+        super().__init__(*args, **kwargs)
+        if self.shop:
+            self.fields['category'].queryset = Category.objects.filter(shop=self.shop)
+            self.fields['supplier'].queryset = Supplier.objects.filter(shop=self.shop)
+
     def clean_sku(self):
         sku = self.cleaned_data.get('sku', '').strip().upper()
         if not sku:
             raise forms.ValidationError("SKU code is required.")
         qs = Product.objects.filter(sku__iexact=sku)
+        if self.shop:
+            qs = qs.filter(shop=self.shop)
         if self.instance and self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
@@ -44,6 +53,15 @@ class ProductForm(forms.ModelForm):
             self.add_error('quantity', "Stock quantity cannot be negative.")
         return cleaned_data
 
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self.shop and not instance.shop_id:
+            instance.shop = self.shop
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance
+
 
 class CategoryForm(forms.ModelForm):
     class Meta:
@@ -54,14 +72,29 @@ class CategoryForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Category description...'}),
         }
 
+    def __init__(self, *args, shop=None, **kwargs):
+        self.shop = shop
+        super().__init__(*args, **kwargs)
+
     def clean_name(self):
         name = self.cleaned_data.get('name', '').strip()
         qs = Category.objects.filter(name__iexact=name)
+        if self.shop:
+            qs = qs.filter(shop=self.shop)
         if self.instance and self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
             raise forms.ValidationError(f"Category '{name}' already exists.")
         return name
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self.shop and not instance.shop_id:
+            instance.shop = self.shop
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance
 
 
 class SupplierForm(forms.ModelForm):
@@ -74,6 +107,19 @@ class SupplierForm(forms.ModelForm):
             'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'supplier@domain.com'}),
             'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Warehouse or physical office location...'}),
         }
+
+    def __init__(self, *args, shop=None, **kwargs):
+        self.shop = shop
+        super().__init__(*args, **kwargs)
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self.shop and not instance.shop_id:
+            instance.shop = self.shop
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance
 
 
 class LocationForm(forms.ModelForm):
@@ -103,16 +149,31 @@ class LocationForm(forms.ModelForm):
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
+    def __init__(self, *args, shop=None, **kwargs):
+        self.shop = shop
+        super().__init__(*args, **kwargs)
+
     def clean_code(self):
         code = self.cleaned_data.get('code', '').strip().upper()
         if not code:
             raise forms.ValidationError("A unique location code is required.")
         qs = InventoryLocation.objects.filter(code__iexact=code)
+        if self.shop:
+            qs = qs.filter(shop=self.shop)
         if self.instance and self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
             raise forms.ValidationError(f"Location code '{code}' is already in use.")
         return code
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self.shop and not instance.shop_id:
+            instance.shop = self.shop
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance
 
 
 class InventoryStockForm(forms.ModelForm):
@@ -127,6 +188,13 @@ class InventoryStockForm(forms.ModelForm):
             'minimum_stock': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'placeholder': '5'}),
             'maximum_stock': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'placeholder': '100'}),
         }
+
+    def __init__(self, *args, shop=None, **kwargs):
+        self.shop = shop
+        super().__init__(*args, **kwargs)
+        if self.shop:
+            self.fields['product'].queryset = Product.objects.filter(shop=self.shop)
+            self.fields['location'].queryset = InventoryLocation.objects.filter(shop=self.shop)
 
     def clean(self):
         cleaned_data = super().clean()

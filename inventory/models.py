@@ -19,8 +19,16 @@ class LocationType(models.TextChoices):
 
 
 class InventoryLocation(models.Model):
+    shop = models.ForeignKey(
+        'accounts.StoreSetting',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='locations',
+        help_text="Shop or store organization this location belongs to"
+    )
     name = models.CharField(max_length=100, help_text="e.g. Main Store, Back Store, Central Warehouse")
-    code = models.CharField(max_length=20, unique=True, db_index=True, help_text="Short identifier e.g. MAIN, BACK, WH1")
+    code = models.CharField(max_length=20, db_index=True, help_text="Short identifier e.g. MAIN, BACK, WH1")
     location_type = models.CharField(
         max_length=30,
         choices=LocationType.choices,
@@ -37,6 +45,7 @@ class InventoryLocation(models.Model):
         ordering = ['name']
         verbose_name = 'Inventory Location'
         verbose_name_plural = 'Inventory Locations'
+        unique_together = [('shop', 'code')]
 
     def __str__(self):
         return f"{self.name} ({self.code})"
@@ -80,7 +89,15 @@ class InventoryLocation(models.Model):
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=100, unique=True, help_text="Unique category name")
+    shop = models.ForeignKey(
+        'accounts.StoreSetting',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='categories',
+        help_text="Shop or store organization this category belongs to"
+    )
+    name = models.CharField(max_length=100, help_text="Category name")
     description = models.TextField(blank=True, help_text="Brief description of the category")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -89,6 +106,7 @@ class Category(models.Model):
         ordering = ['name']
         verbose_name = 'Category'
         verbose_name_plural = 'Categories'
+        unique_together = [('shop', 'name')]
 
     def __str__(self):
         return self.name
@@ -99,6 +117,14 @@ class Category(models.Model):
 
 
 class Supplier(models.Model):
+    shop = models.ForeignKey(
+        'accounts.StoreSetting',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='suppliers',
+        help_text="Shop or store organization this supplier belongs to"
+    )
     name = models.CharField(max_length=150, help_text="Supplier business or individual name")
     phone = models.CharField(max_length=30, help_text="Primary phone contact")
     email = models.EmailField(blank=True, null=True, help_text="Contact email address")
@@ -120,8 +146,16 @@ class Supplier(models.Model):
 
 
 class Product(models.Model):
+    shop = models.ForeignKey(
+        'accounts.StoreSetting',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='products',
+        help_text="Shop or store organization this product belongs to"
+    )
     name = models.CharField(max_length=200, help_text="Product or item title")
-    sku = models.CharField(max_length=50, unique=True, db_index=True, help_text="Unique Stock Keeping Unit code")
+    sku = models.CharField(max_length=50, db_index=True, help_text="Stock Keeping Unit code")
     description = models.TextField(blank=True, help_text="Detailed product description")
     category = models.ForeignKey(
         Category,
@@ -167,6 +201,7 @@ class Product(models.Model):
         ordering = ['name']
         verbose_name = 'Product'
         verbose_name_plural = 'Products'
+        unique_together = [('shop', 'sku')]
 
     def __str__(self):
         return f"{self.name} ({self.sku})"

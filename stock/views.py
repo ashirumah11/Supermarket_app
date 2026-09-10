@@ -17,6 +17,7 @@ User = get_user_model()
 
 @login_required
 def movement_list_view(request):
+    shop = getattr(request.user, 'shop', None)
     product_id = request.GET.get('product', '').strip()
     movement_type = request.GET.get('type', '').strip()
     user_id = request.GET.get('user', '').strip()
@@ -24,7 +25,11 @@ def movement_list_view(request):
     date_from = request.GET.get('date_from', '').strip()
     date_to = request.GET.get('date_to', '').strip()
 
-    movements = StockMovement.objects.select_related('product', 'user').all()
+    movements = StockMovement.objects.select_related('product', 'user')
+    if shop:
+        movements = movements.filter(shop=shop)
+    else:
+        movements = movements.all()
 
     if product_id:
         movements = movements.filter(product_id=product_id)
@@ -48,19 +53,23 @@ def movement_list_view(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    products_qs = Product.objects.filter(shop=shop).order_by('name') if shop else Product.objects.all().order_by('name')
+    users_qs = User.objects.filter(shop=shop).order_by('username') if shop else User.objects.all().order_by('username')
+    total_count = StockMovement.objects.filter(shop=shop).count() if shop else StockMovement.objects.count()
+
     context = {
         'movements': page_obj,
         'page_obj': page_obj,
-        'products': Product.objects.all().order_by('name'),
+        'products': products_qs,
         'movement_types': StockMovementType.choices,
-        'users': User.objects.all().order_by('username'),
+        'users': users_qs,
         'selected_product': product_id,
         'selected_type': movement_type,
         'selected_user': user_id,
         'selected_query': query,
         'selected_date_from': date_from,
         'selected_date_to': date_to,
-        'total_count': StockMovement.objects.count(),
+        'total_count': total_count,
     }
     return render(request, 'stock/movement_list.html', context)
 
@@ -68,7 +77,11 @@ def movement_list_view(request):
 @staff_required
 @require_POST
 def stock_in_view(request, product_id):
-    product = get_object_or_404(Product, pk=product_id)
+    shop = getattr(request.user, 'shop', None)
+    if shop:
+        product = get_object_or_404(Product, pk=product_id, shop=shop)
+    else:
+        product = get_object_or_404(Product, pk=product_id)
     form = StockInForm(request.POST)
     next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or 'product_detail'
 
@@ -104,7 +117,11 @@ def stock_in_view(request, product_id):
 @staff_required
 @require_POST
 def stock_out_view(request, product_id):
-    product = get_object_or_404(Product, pk=product_id)
+    shop = getattr(request.user, 'shop', None)
+    if shop:
+        product = get_object_or_404(Product, pk=product_id, shop=shop)
+    else:
+        product = get_object_or_404(Product, pk=product_id)
     form = StockOutForm(request.POST)
     next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or 'product_detail'
 
@@ -140,7 +157,11 @@ def stock_out_view(request, product_id):
 @manager_required
 @require_POST
 def stock_adjustment_view(request, product_id):
-    product = get_object_or_404(Product, pk=product_id)
+    shop = getattr(request.user, 'shop', None)
+    if shop:
+        product = get_object_or_404(Product, pk=product_id, shop=shop)
+    else:
+        product = get_object_or_404(Product, pk=product_id)
     form = StockAdjustmentForm(request.POST)
     next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or 'product_detail'
 
@@ -177,8 +198,9 @@ def stock_adjustment_view(request, product_id):
 @manager_required
 def stock_movement_create_view(request):
     """Dedicated page to record a stock movement with product selector."""
+    shop = getattr(request.user, 'shop', None)
     if request.method == 'POST':
-        form = StockMovementActionForm(request.POST)
+        form = StockMovementActionForm(request.POST, shop=shop)
         if form.is_valid():
             product = form.cleaned_data['product']
             m_type = form.cleaned_data['movement_type']
@@ -214,7 +236,7 @@ def stock_movement_create_view(request):
             messages.error(request, "Please check the form inputs.")
     else:
         initial_product = request.GET.get('product')
-        form = StockMovementActionForm(initial={'product': initial_product} if initial_product else {})
+        form = StockMovementActionForm(initial={'product': initial_product} if initial_product else {}, shop=shop)
 
     return render(request, 'stock/stock_form.html', {'form': form, 'title': 'Record Stock Movement'})
 
@@ -224,6 +246,7 @@ def stock_movement_create_view(request):
 @login_required
 def transfer_list_view(request):
     """List all stock transfers with pagination and filters."""
+    shop = getattr(request.user, 'shop', None)
     query = request.GET.get('q', '').strip()
     product_id = request.GET.get('product', '').strip()
     date_from = request.GET.get('date_from', '').strip()
@@ -231,7 +254,11 @@ def transfer_list_view(request):
 
     transfers = StockTransfer.objects.select_related(
         'product', 'source_location', 'destination_location', 'user'
-    ).all()
+    )
+    if shop:
+        transfers = transfers.filter(shop=shop)
+    else:
+        transfers = transfers.all()
 
     if query:
         transfers = transfers.filter(
@@ -252,15 +279,18 @@ def transfer_list_view(request):
     paginator = Paginator(transfers, 15)
     page_obj = paginator.get_page(request.GET.get('page'))
 
+    products_qs = Product.objects.filter(shop=shop).order_by('name') if shop else Product.objects.all().order_by('name')
+    total_count = StockTransfer.objects.filter(shop=shop).count() if shop else StockTransfer.objects.count()
+
     context = {
         'transfers': page_obj,
         'page_obj': page_obj,
-        'products': Product.objects.all().order_by('name'),
+        'products': products_qs,
         'selected_product': product_id,
         'selected_query': query,
         'selected_date_from': date_from,
         'selected_date_to': date_to,
-        'total_count': StockTransfer.objects.count(),
+        'total_count': total_count,
     }
     return render(request, 'stock/transfer_list.html', context)
 
@@ -268,8 +298,9 @@ def transfer_list_view(request):
 @manager_required
 def transfer_create_view(request):
     """Form to execute a stock transfer between locations."""
+    shop = getattr(request.user, 'shop', None)
     if request.method == 'POST':
-        form = StockTransferForm(request.POST)
+        form = StockTransferForm(request.POST, shop=shop)
         if form.is_valid():
             try:
                 transfer = StockTransferService.execute_transfer(
@@ -297,9 +328,13 @@ def transfer_create_view(request):
         form = StockTransferForm(initial={
             'product': request.GET.get('product'),
             'source_location': request.GET.get('from'),
-        })
+        }, shop=shop)
 
-    locations = InventoryLocation.objects.filter(is_active=True).order_by('name')
+    locations = InventoryLocation.objects.filter(is_active=True)
+    if shop:
+        locations = locations.filter(shop=shop)
+    locations = locations.order_by('name')
+
     return render(request, 'stock/transfer_form.html', {
         'form': form,
         'locations': locations,
@@ -310,26 +345,30 @@ def transfer_create_view(request):
 @login_required
 def transfer_detail_view(request, pk):
     """Detail view for a specific stock transfer, including receipt print."""
-    transfer = get_object_or_404(
-        StockTransfer.objects.select_related(
-            'product', 'source_location', 'destination_location', 'user'
-        ),
-        pk=pk
+    shop = getattr(request.user, 'shop', None)
+    qs = StockTransfer.objects.select_related(
+        'product', 'source_location', 'destination_location', 'user'
     )
+    if shop:
+        transfer = get_object_or_404(qs, pk=pk, shop=shop)
+    else:
+        transfer = get_object_or_404(qs, pk=pk)
     return render(request, 'stock/transfer_detail.html', {'transfer': transfer})
 
 
 @login_required
 def transfer_receipt_view(request, pk):
     """Print-ready receipt for a stock transfer."""
-    transfer = get_object_or_404(
-        StockTransfer.objects.select_related(
-            'product', 'source_location', 'destination_location', 'user'
-        ),
-        pk=pk
+    shop = getattr(request.user, 'shop', None)
+    qs = StockTransfer.objects.select_related(
+        'product', 'source_location', 'destination_location', 'user'
     )
+    if shop:
+        transfer = get_object_or_404(qs, pk=pk, shop=shop)
+    else:
+        transfer = get_object_or_404(qs, pk=pk)
     from accounts.models import StoreSetting
-    store = StoreSetting.get_settings()
+    store = shop or StoreSetting.get_settings(request.user)
     return render(request, 'stock/transfer_receipt.html', {
         'transfer': transfer,
         'store': store,
@@ -339,6 +378,7 @@ def transfer_receipt_view(request, pk):
 @login_required
 def location_stock_api(request):
     """JSON API: returns available stock of a product at a given location."""
+    shop = getattr(request.user, 'shop', None)
     product_id = request.GET.get('product')
     location_id = request.GET.get('location')
 
@@ -346,21 +386,28 @@ def location_stock_api(request):
         return JsonResponse({'quantity': 0, 'error': 'Missing parameters'})
 
     try:
-        stock = InventoryStock.objects.get(product_id=product_id, location_id=location_id)
-        return JsonResponse({'quantity': stock.quantity})
-    except InventoryStock.DoesNotExist:
+        qs = InventoryStock.objects.filter(product_id=product_id, location_id=location_id)
+        if shop:
+            qs = qs.filter(product__shop=shop)
+        stock = qs.first()
+        if stock:
+            return JsonResponse({'quantity': stock.quantity})
+        return JsonResponse({'quantity': 0})
+    except Exception:
         return JsonResponse({'quantity': 0})
 
 
 @login_required
 def movement_receipt_view(request, pk):
     """Print-ready official audit receipt and voucher for any stock operation."""
-    movement = get_object_or_404(
-        StockMovement.objects.select_related('product', 'location', 'destination_location', 'user'),
-        pk=pk
-    )
+    shop = getattr(request.user, 'shop', None)
+    qs = StockMovement.objects.select_related('product', 'location', 'destination_location', 'user')
+    if shop:
+        movement = get_object_or_404(qs, pk=pk, shop=shop)
+    else:
+        movement = get_object_or_404(qs, pk=pk)
     from accounts.models import StoreSetting
-    store = StoreSetting.get_settings()
+    store = shop or StoreSetting.get_settings(request.user)
     return render(request, 'stock/movement_receipt.html', {
         'movement': movement,
         'store': store,

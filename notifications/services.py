@@ -44,6 +44,8 @@ class NotificationService:
             is_active=True,
             role__in=['ADMIN', 'MANAGER']
         )
+        if getattr(product, 'shop', None):
+            recipients = recipients.filter(shop=product.shop)
 
         notifications_created = []
         for user in recipients:

@@ -6,15 +6,35 @@ from accounts import views as account_views
 from inventory import views as inventory_views
 
 urlpatterns = [
-    # Public & Auth
+    # ---------------------------------------------------------------------------
+    # Public & Authentication
+    # ---------------------------------------------------------------------------
     path('', account_views.home_view, name='home'),
     path('login/', account_views.login_view, name='login'),
     path('logout/', account_views.logout_view, name='logout'),
 
+    # Initial Admin registration (locked once an Admin exists)
+    path('register/', account_views.register_view, name='register'),
+
+    # Password recovery flow
+    path('forgot-password/', account_views.forgot_password_view, name='forgot_password'),
+    path(
+        'reset-password/<uidb64>/<token>/',
+        account_views.password_reset_confirm_view,
+        name='password_reset_confirm',
+    ),
+
+    # Change password (logged-in users — dedicated standalone page)
+    path('account/change-password/', account_views.change_password_view, name='change_password'),
+
+    # ---------------------------------------------------------------------------
     # Executive Dashboard
+    # ---------------------------------------------------------------------------
     path('dashboard/', include('dashboard.urls')),
 
+    # ---------------------------------------------------------------------------
     # Inventory Catalog
+    # ---------------------------------------------------------------------------
     path('inventory/', include('inventory.urls')),
 
     # Categories (direct top-level URLs)
@@ -30,25 +50,37 @@ urlpatterns = [
     path('suppliers/<int:pk>/edit/', inventory_views.supplier_edit_view, name='supplier_edit'),
     path('suppliers/<int:pk>/delete/', inventory_views.supplier_delete_view, name='supplier_delete'),
 
+    # ---------------------------------------------------------------------------
     # Stock Movements & Ledger
+    # ---------------------------------------------------------------------------
     path('stock-movements/', include('stock.urls')),
 
+    # ---------------------------------------------------------------------------
     # In-App Notifications
+    # ---------------------------------------------------------------------------
     path('notifications/', include('notifications.urls')),
 
+    # ---------------------------------------------------------------------------
     # Executive Reports & Valuation
+    # ---------------------------------------------------------------------------
     path('reports/', include('reports.urls')),
 
+    # ---------------------------------------------------------------------------
     # User Management (Admin only)
+    # ---------------------------------------------------------------------------
     path('users/', account_views.user_list_view, name='user_list'),
     path('users/create/', account_views.user_create_view, name='user_create'),
     path('users/<int:pk>/edit/', account_views.user_edit_view, name='user_edit'),
     path('users/<int:pk>/toggle-status/', account_views.user_toggle_status_view, name='user_toggle_status'),
 
+    # ---------------------------------------------------------------------------
     # Settings
+    # ---------------------------------------------------------------------------
     path('settings/', account_views.settings_view, name='settings'),
 
-    # Django Admin (for developer convenience)
+    # ---------------------------------------------------------------------------
+    # Django Admin (developer convenience)
+    # ---------------------------------------------------------------------------
     path('admin/', admin.site.urls),
 ]
 

@@ -2,18 +2,21 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import TestCase
+from accounts.models import StoreSetting
 from .models import Category, Product, StockStatus, Supplier
 from .forms import ProductForm
 
 class ProductCatalogTests(TestCase):
     def setUp(self):
-        self.category = Category.objects.create(name='Groceries', description='Dry goods')
-        self.supplier = Supplier.objects.create(name='Test Supplier', phone='+254700000000')
+        self.shop = StoreSetting.get_settings()
+        self.category = Category.objects.create(name='Groceries', description='Dry goods', shop=self.shop)
+        self.supplier = Supplier.objects.create(name='Test Supplier', phone='+254700000000', shop=self.shop)
 
     def test_product_creation(self):
         product = Product.objects.create(
             name='Test Sugar',
             sku='TST-SUG-01',
+            shop=self.shop,
             category=self.category,
             supplier=self.supplier,
             price=Decimal('150.00'),
@@ -30,6 +33,7 @@ class ProductCatalogTests(TestCase):
         Product.objects.create(
             name='First Item',
             sku='DUPLICATE-SKU',
+            shop=self.shop,
             price=Decimal('100.00'),
             quantity=10,
             minimum_stock=5,
@@ -39,6 +43,7 @@ class ProductCatalogTests(TestCase):
             Product.objects.create(
                 name='Second Item',
                 sku='DUPLICATE-SKU',
+                shop=self.shop,
                 price=Decimal('120.00'),
                 quantity=10,
                 minimum_stock=5,

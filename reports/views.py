@@ -16,9 +16,15 @@ def reports_view(request):
     date_to = request.GET.get('date_to', '').strip()
     export = request.GET.get('export', '').strip()
 
+    shop = getattr(request.user, 'shop', None)
+
     # Base querysets
-    products = Product.objects.select_related('category', 'supplier').all()
+    products = Product.objects.select_related('category', 'supplier')
     movements = StockMovement.objects.all()
+
+    if shop:
+        products = products.filter(shop=shop)
+        movements = movements.filter(shop=shop)
 
     if date_from:
         movements = movements.filter(created_at__date__gte=date_from)
@@ -48,7 +54,10 @@ def reports_view(request):
     }
 
     # Category breakdown
-    categories = Category.objects.annotate(
+    categories_qs = Category.objects.all()
+    if shop:
+        categories_qs = categories_qs.filter(shop=shop)
+    categories = categories_qs.annotate(
         total_products=Count('products'),
         total_units=Sum('products__quantity'),
         category_value=Sum(F('products__price') * F('products__quantity'))
