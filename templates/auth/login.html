@@ -476,6 +476,9 @@
     }
   }
 
+  const shouldOpenSignup =
+    {% if active_tab == 'signup' or reg_form.errors %}true{% else %}false{% endif %};
+
   /* Auto-open appropriate tab on load */
   document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -488,7 +491,7 @@
       return;
     }
 
-    if (tabParam === 'signup' || window.location.hash === '#signup' || {% if active_tab == 'signup' or reg_form.errors %}true{% else %}false{% endif %}) {
+    if (tabParam === 'signup' || window.location.hash === '#signup' || shouldOpenSignup) {
       switchTab('signup');
     } else if (tabParam === 'signin') {
       switchTab('signin');
