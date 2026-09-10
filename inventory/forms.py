@@ -2,6 +2,14 @@ from django import forms
 from .models import Category, InventoryLocation, InventoryStock, Product, Supplier
 
 class ProductForm(forms.ModelForm):
+    location = forms.ModelChoiceField(
+        queryset=InventoryLocation.objects.none(),
+        required=False,
+        label="Location",
+        help_text="Physical location that will receive the opening stock.",
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+
     class Meta:
         model = Product
         fields = [
@@ -26,6 +34,20 @@ class ProductForm(forms.ModelForm):
         if self.shop:
             self.fields['category'].queryset = Category.objects.filter(shop=self.shop)
             self.fields['supplier'].queryset = Supplier.objects.filter(shop=self.shop)
+            self.fields['location'].queryset = InventoryLocation.objects.filter(
+                shop=self.shop, is_active=True
+            ).order_by('name')
+        else:
+            self.fields['location'].queryset = InventoryLocation.objects.filter(
+                is_active=True
+            ).order_by('name')
+
+        if self.instance.pk:
+            assigned_location_ids = list(
+                self.instance.stocks.values_list('location_id', flat=True).distinct()[:2]
+            )
+            if len(assigned_location_ids) == 1:
+                self.initial['location'] = assigned_location_ids[0]
 
     def clean_sku(self):
         sku = self.cleaned_data.get('sku', '').strip().upper()
@@ -45,12 +67,15 @@ class ProductForm(forms.ModelForm):
         min_stock = cleaned_data.get('minimum_stock')
         max_stock = cleaned_data.get('maximum_stock')
         quantity = cleaned_data.get('quantity')
+        location = cleaned_data.get('location')
 
         if min_stock is not None and max_stock is not None:
             if max_stock < min_stock:
                 self.add_error('maximum_stock', "Maximum stock must be greater than or equal to minimum stock threshold.")
         if quantity is not None and quantity < 0:
             self.add_error('quantity', "Stock quantity cannot be negative.")
+        if not self.instance.pk and quantity and not location:
+            self.add_error('location', "Select the physical location for the opening stock.")
         return cleaned_data
 
     def save(self, commit=True):

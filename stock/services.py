@@ -6,13 +6,15 @@ from .models import StockMovement, StockMovementType, StockTransfer
 
 class StockMovementService:
     @staticmethod
-    def record_movement(product, movement_type, quantity, user, reason, reference='', new_target_quantity=None):
+    def record_movement(product, movement_type, quantity, user, reason, reference='', new_target_quantity=None, location=None):
         """
         Atomically updates product quantity and creates an audit movement record.
         Strictly prevents negative inventory and triggers transition notifications.
         """
         if not reason or not reason.strip():
             raise ValidationError("A clear operational reason is required for every stock operation.")
+        if location and product.shop_id and location.shop_id != product.shop_id:
+            raise ValidationError("The selected location does not belong to this product's shop.")
 
         with transaction.atomic():
             # Lock the product row to ensure atomic, concurrency-safe inventory calculations
@@ -65,6 +67,7 @@ class StockMovementService:
             movement = StockMovement.objects.create(
                 product=locked_product,
                 shop=shop,
+                location=location,
                 type=movement_type,
                 quantity=movement_delta,
                 previous_quantity=previous_quantity,

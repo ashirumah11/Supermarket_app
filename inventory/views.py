@@ -1,16 +1,53 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import Count, F, Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from accounts.decorators import admin_required, manager_required, staff_required
 from stock.forms import StockAdjustmentForm, StockInForm, StockOutForm
 from stock.models import StockMovement, StockMovementType
-from stock.services import StockMovementService
+from stock.services import StockMovementService, StockTransferService
 from .forms import CategoryForm, InventoryStockForm, LocationForm, ProductForm, SupplierForm
 from .models import Category, InventoryLocation, InventoryStock, Product, StockStatus, Supplier
 
 # ==================== PRODUCT VIEWS ====================
+
+def _assign_product_to_location(product, location, user):
+    """Place existing product stock at the selected physical location."""
+    source_stocks = list(
+        product.stocks.select_related('location').filter(quantity__gt=0).exclude(location=location)
+    )
+
+    if source_stocks:
+        for source_stock in source_stocks:
+            StockTransferService.execute_transfer(
+                product=product,
+                source_location=source_stock.location,
+                destination_location=location,
+                quantity=source_stock.quantity,
+                user=user,
+                reason="Product location updated",
+                reference="SYS-LOCATION-UPDATE",
+            )
+        return
+
+    # Products created before location tracking may have a total quantity but no
+    # InventoryStock row. Add that historical stock to the selected location.
+    location_stock, _ = InventoryStock.objects.get_or_create(
+        product=product,
+        location=location,
+        defaults={
+            'quantity': product.quantity,
+            'minimum_stock': product.minimum_stock,
+            'maximum_stock': product.maximum_stock,
+        },
+    )
+    if location_stock.quantity != product.quantity:
+        location_stock.quantity = product.quantity
+        location_stock.minimum_stock = product.minimum_stock
+        location_stock.maximum_stock = product.maximum_stock
+        location_stock.save(update_fields=['quantity', 'minimum_stock', 'maximum_stock', 'updated_at'])
 
 @login_required
 def product_list_view(request):
@@ -96,21 +133,31 @@ def product_create_view(request):
         form = ProductForm(request.POST, shop=shop)
         if form.is_valid():
             initial_qty = form.cleaned_data.get('quantity', 0)
-            product = form.save(commit=False)
-            product.quantity = 0
-            if shop and not product.shop_id:
-                product.shop = shop
-            product.save()
+            location = form.cleaned_data.get('location')
+            with transaction.atomic():
+                product = form.save(commit=False)
+                product.quantity = 0
+                if shop and not product.shop_id:
+                    product.shop = shop
+                product.save()
 
-            if initial_qty > 0:
-                StockMovementService.record_movement(
-                    product=product,
-                    movement_type=StockMovementType.IN,
-                    quantity=initial_qty,
-                    user=request.user,
-                    reason="Initial Product Opening Stock",
-                    reference="SYS-INIT"
-                )
+                if initial_qty > 0:
+                    InventoryStock.objects.create(
+                        product=product,
+                        location=location,
+                        quantity=initial_qty,
+                        minimum_stock=product.minimum_stock,
+                        maximum_stock=product.maximum_stock,
+                    )
+                    StockMovementService.record_movement(
+                        product=product,
+                        movement_type=StockMovementType.IN,
+                        quantity=initial_qty,
+                        user=request.user,
+                        reason="Initial Product Opening Stock",
+                        reference="SYS-INIT",
+                        location=location,
+                    )
 
             messages.success(request, f"Product '{product.name}' (SKU: {product.sku}) created successfully.")
             return redirect('product_detail', pk=product.pk)
@@ -162,7 +209,11 @@ def product_edit_view(request, pk):
     if request.method == 'POST':
         form = ProductForm(request.POST, instance=product, shop=shop)
         if form.is_valid():
-            form.save()
+            location = form.cleaned_data.get('location')
+            with transaction.atomic():
+                product = form.save()
+                if location:
+                    _assign_product_to_location(product, location, request.user)
             messages.success(request, f"Product '{product.name}' updated successfully.")
             return redirect('product_detail', pk=product.pk)
         else:
