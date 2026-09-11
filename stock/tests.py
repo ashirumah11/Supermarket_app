@@ -99,6 +99,52 @@ class StockMovementEngineTests(TestCase):
                 reason=""
             )
 
+    def test_stock_operations_update_the_selected_location(self):
+        location = InventoryLocation.objects.create(
+            name='Receiving Bay', code='RECEIVING', is_active=True
+        )
+        location_stock = InventoryStock.objects.create(
+            product=self.product, location=location, quantity=20,
+            minimum_stock=5, maximum_stock=100,
+        )
+
+        stock_in, _ = StockMovementService.record_movement(
+            product=self.product, movement_type=StockMovementType.IN, quantity=8,
+            user=self.user, reason='Supplier delivery', location=location,
+        )
+        location_stock.refresh_from_db()
+        self.product.refresh_from_db()
+        self.assertEqual(location_stock.quantity, 28)
+        self.assertEqual(self.product.quantity, 28)
+        self.assertEqual(stock_in.location, location)
+
+        stock_out, _ = StockMovementService.record_movement(
+            product=self.product, movement_type=StockMovementType.OUT, quantity=6,
+            user=self.user, reason='Customer dispatch', location=location,
+        )
+        location_stock.refresh_from_db()
+        self.product.refresh_from_db()
+        self.assertEqual(location_stock.quantity, 22)
+        self.assertEqual(self.product.quantity, 22)
+        self.assertEqual(stock_out.location, location)
+
+    def test_stock_out_cannot_exceed_the_selected_location_quantity(self):
+        location = InventoryLocation.objects.create(
+            name='Store Counter', code='COUNTER', is_active=True
+        )
+        InventoryStock.objects.create(
+            product=self.product, location=location, quantity=3,
+            minimum_stock=1, maximum_stock=100,
+        )
+
+        with self.assertRaises(ValidationError) as context:
+            StockMovementService.record_movement(
+                product=self.product, movement_type=StockMovementType.OUT, quantity=4,
+                user=self.user, reason='Customer dispatch', location=location,
+            )
+
+        self.assertIn('exceeds stock available at', str(context.exception))
+
 
 from inventory.models import InventoryLocation, InventoryStock
 from .services import StockTransferService

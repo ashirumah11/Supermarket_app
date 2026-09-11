@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, F, Q, Sum
+from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, redirect, render
 from accounts.decorators import admin_required, manager_required, staff_required
 from stock.forms import StockAdjustmentForm, StockInForm, StockOutForm
@@ -120,8 +121,8 @@ def product_list_view(request):
         'selected_status': status_filter,
         'selected_sort': sort_by,
         'total_count': total_count,
-        'stock_in_form': StockInForm(),
-        'stock_out_form': StockOutForm(),
+        'stock_in_form': StockInForm(shop=shop),
+        'stock_out_form': StockOutForm(shop=shop),
     }
     return render(request, 'inventory/product_list.html', context)
 
@@ -184,8 +185,8 @@ def product_detail_view(request, pk):
 
     recent_movements = product.movements.select_related('user').order_by('-created_at')[:10]
 
-    stock_in_form = StockInForm()
-    stock_out_form = StockOutForm()
+    stock_in_form = StockInForm(shop=shop)
+    stock_out_form = StockOutForm(shop=shop)
     stock_adjust_form = StockAdjustmentForm(initial={'new_quantity': product.quantity})
 
     context = {
@@ -495,7 +496,10 @@ def location_list_view(request):
     location_type = request.GET.get('type', '').strip()
 
     locations = InventoryLocation.objects.annotate(
-        stock_count=Count('stocks', distinct=True)
+        stock_count=Count('stocks', distinct=True),
+        # Sum the quantities of every catalog item held at each location.  This
+        # is different from stock_count, which only counts distinct item rows.
+        total_quantity=Coalesce(Sum('stocks__quantity'), 0),
     )
     if shop:
         locations = locations.filter(shop=shop)
@@ -537,10 +541,13 @@ def location_list_view(request):
 @login_required
 def location_detail_view(request, pk):
     shop = getattr(request.user, 'shop', None)
+    locations = InventoryLocation.objects.annotate(
+        total_quantity=Coalesce(Sum('stocks__quantity'), 0)
+    )
     if shop:
-        location = get_object_or_404(InventoryLocation, pk=pk, shop=shop)
+        location = get_object_or_404(locations, pk=pk, shop=shop)
     else:
-        location = get_object_or_404(InventoryLocation, pk=pk)
+        location = get_object_or_404(locations, pk=pk)
     stocks = location.stocks.select_related('product', 'product__category').order_by('product__name')
     recent_movements = location.movements.select_related('product', 'user').order_by('-created_at')[:10]
 

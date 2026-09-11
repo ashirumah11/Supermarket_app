@@ -54,6 +54,17 @@
           </div>
         </div>
 
+        <div class="mb-3" id="location-field-wrap">
+          <label for="{{ form.location.id_for_label }}" class="form-label fw-semibold">
+            <span id="location-label">Location</span> <span class="text-danger" id="location-required">*</span>
+          </label>
+          {{ form.location }}
+          {% if form.location.errors %}
+            <div class="text-danger small mt-1">{{ form.location.errors.0 }}</div>
+          {% endif %}
+          <div class="form-text" id="location-help">Select the physical location affected by this movement.</div>
+        </div>
+
         <div class="mb-3">
           <label for="{{ form.reason.id_for_label }}" class="form-label fw-semibold">Operational Reason <span class="text-danger">*</span></label>
           {{ form.reason }}
@@ -87,18 +98,30 @@
   const typeSelect = document.getElementById('id_movement_type');
   const qtyLabel = document.getElementById('qty-label');
   const qtyHelp = document.getElementById('qty-help');
+  const locationLabel = document.getElementById('location-label');
+  const locationHelp = document.getElementById('location-help');
+  const locationRequired = document.getElementById('location-required');
 
   function updateLabels() {
     if (!typeSelect) return;
     if (typeSelect.value === 'ADJUSTMENT') {
       qtyLabel.textContent = 'Actual Physical Stock Count';
       qtyHelp.textContent = 'Target inventory count physically counted.';
+      locationLabel.textContent = 'Location (not required for a global adjustment)';
+      locationHelp.textContent = 'Adjustments reconcile the product total; leave this blank unless recording a note for a specific location.';
+      locationRequired.classList.add('d-none');
     } else if (typeSelect.value === 'OUT') {
       qtyLabel.textContent = 'Quantity to Dispatch';
-      qtyHelp.textContent = 'Units removed. Cannot exceed current in-stock count.';
+      qtyHelp.textContent = 'Units removed. Cannot exceed stock at the selected location.';
+      locationLabel.textContent = 'Dispatch From Location';
+      locationHelp.textContent = 'Select the physical location these units are leaving.';
+      locationRequired.classList.remove('d-none');
     } else {
       qtyLabel.textContent = 'Quantity to Restock';
       qtyHelp.textContent = 'Units added to inventory.';
+      locationLabel.textContent = 'Restock To Location';
+      locationHelp.textContent = 'Select the physical location receiving these units.';
+      locationRequired.classList.remove('d-none');
     }
   }
 

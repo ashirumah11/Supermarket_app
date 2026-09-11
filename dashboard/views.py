@@ -59,8 +59,8 @@ def dashboard_view(request):
         'attention_products': attention_products,
         'categories_count': categories.count(),
         'suppliers_count': suppliers.count(),
-        'stock_in_form': StockInForm(),
-        'stock_out_form': StockOutForm(),
+        'stock_in_form': StockInForm(shop=shop),
+        'stock_out_form': StockOutForm(shop=shop),
     }
     if request.user.is_manager_user:
         context['inventory_value'] = inventory_val

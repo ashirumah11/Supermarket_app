@@ -67,11 +67,15 @@ document.addEventListener('DOMContentLoaded', function () {
       const formElem = document.getElementById('quickStockForm');
       const actionTypeInput = document.getElementById('quickStockActionType');
       const submitBtn = document.getElementById('quickStockSubmitBtn');
+      const locationLabel = document.getElementById('quickStockLocationLabel');
+      const locationHelp = document.getElementById('quickStockLocationHelp');
+      const locationSelect = document.getElementById('quickStockLocation');
 
       if (nameElem) nameElem.textContent = productName;
       if (skuElem) skuElem.textContent = productSku;
       if (stockElem) stockElem.textContent = currentStock;
       if (actionTypeInput) actionTypeInput.value = actionType;
+      if (locationSelect) locationSelect.value = '';
 
       if (actionType === 'out') {
         if (titleElem) titleElem.textContent = 'Record Stock OUT (Dispatch / Sale)';
@@ -80,6 +84,8 @@ document.addEventListener('DOMContentLoaded', function () {
           submitBtn.textContent = 'Confirm Stock OUT';
           submitBtn.className = 'btn btn-danger';
         }
+        if (locationLabel) locationLabel.textContent = 'Dispatch From Location';
+        if (locationHelp) locationHelp.textContent = 'Choose the physical location these units are leaving.';
       } else {
         if (titleElem) titleElem.textContent = 'Record Stock IN (Restock / Delivery)';
         if (formElem) formElem.action = `/stock-movements/in/${productId}/`;
@@ -87,6 +93,8 @@ document.addEventListener('DOMContentLoaded', function () {
           submitBtn.textContent = 'Confirm Stock IN';
           submitBtn.className = 'btn btn-success';
         }
+        if (locationLabel) locationLabel.textContent = 'Restock To Location';
+        if (locationHelp) locationHelp.textContent = 'Choose the physical location receiving these units.';
       }
     });
   }

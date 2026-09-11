@@ -140,6 +140,11 @@
                   {{ stock_in_form.quantity }}
                 </div>
                 <div class="mb-3">
+                  <label class="form-label fw-semibold small">{{ stock_in_form.location.label }} <span class="text-danger">*</span></label>
+                  {{ stock_in_form.location }}
+                  <div class="form-text">{{ stock_in_form.location.help_text }}</div>
+                </div>
+                <div class="mb-3">
                   <label class="form-label fw-semibold small">Reason</label>
                   {{ stock_in_form.reason }}
                 </div>
@@ -162,7 +167,12 @@
                 <div class="mb-3">
                   <label class="form-label fw-semibold small">Quantity to Remove <span class="text-danger">*</span></label>
                   {{ stock_out_form.quantity }}
-                  <div class="form-text">Available: {{ product.quantity }} units. Cannot exceed stock.</div>
+                  <div class="form-text">The selected location must have enough units to dispatch.</div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold small">{{ stock_out_form.location.label }} <span class="text-danger">*</span></label>
+                  {{ stock_out_form.location }}
+                  <div class="form-text">{{ stock_out_form.location.help_text }}</div>
                 </div>
                 <div class="mb-3">
                   <label class="form-label fw-semibold small">Reason</label>

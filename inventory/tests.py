@@ -2,8 +2,8 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import TestCase
-from accounts.models import StoreSetting
-from .models import Category, InventoryLocation, Product, StockStatus, Supplier
+from accounts.models import StoreSetting, User
+from .models import Category, InventoryLocation, InventoryStock, Product, StockStatus, Supplier
 from .forms import ProductForm
 from .views import _assign_product_to_location
 
@@ -50,6 +50,35 @@ class ProductCatalogTests(TestCase):
 
         location_stock = product.stocks.get(location=self.location)
         self.assertEqual(location_stock.quantity, 12)
+
+    def test_location_pages_show_the_sum_of_item_quantities(self):
+        user = User.objects.create_user(
+            username='location-viewer', password='test-password', shop=self.shop
+        )
+        first_product = Product.objects.create(
+            name='Rice', sku='LOCATION-TOTAL-01', shop=self.shop,
+            price=Decimal('100.00'), minimum_stock=2, maximum_stock=20,
+        )
+        second_product = Product.objects.create(
+            name='Beans', sku='LOCATION-TOTAL-02', shop=self.shop,
+            price=Decimal('80.00'), minimum_stock=2, maximum_stock=20,
+        )
+        InventoryStock.objects.create(product=first_product, location=self.location, quantity=7)
+        InventoryStock.objects.create(product=second_product, location=self.location, quantity=11)
+
+        self.client.force_login(user)
+
+        product_list_response = self.client.get('/inventory/')
+        list_response = self.client.get('/inventory/locations/')
+        detail_response = self.client.get(f'/inventory/locations/{self.location.pk}/')
+
+        self.assertEqual(product_list_response.status_code, 200)
+        self.assertEqual(list_response.status_code, 200)
+        self.assertEqual(detail_response.status_code, 200)
+        self.assertContains(product_list_response, 'quickStockLocation')
+        self.assertContains(product_list_response, 'Main Store (MAIN)')
+        self.assertContains(list_response, '18')
+        self.assertContains(detail_response, '18')
 
     def test_product_creation(self):
         product = Product.objects.create(

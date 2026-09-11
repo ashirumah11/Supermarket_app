@@ -82,11 +82,12 @@ def stock_in_view(request, product_id):
         product = get_object_or_404(Product, pk=product_id, shop=shop)
     else:
         product = get_object_or_404(Product, pk=product_id)
-    form = StockInForm(request.POST)
+    form = StockInForm(request.POST, shop=shop)
     next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or 'product_detail'
 
     if form.is_valid():
         quantity = form.cleaned_data['quantity']
+        location = form.cleaned_data['location']
         reason = form.cleaned_data['reason']
         reference = form.cleaned_data.get('reference', '')
 
@@ -97,11 +98,12 @@ def stock_in_view(request, product_id):
                 quantity=quantity,
                 user=request.user,
                 reason=reason,
-                reference=reference
+                reference=reference,
+                location=location,
             )
             messages.success(
                 request,
-                f"Stock IN recorded: Added {quantity} units to '{product.name}'. New total: {product.quantity} units."
+                f"Stock IN recorded: Added {quantity} units to '{product.name}' at {location.name}. New total: {product.quantity} units."
             )
         except ValidationError as e:
             messages.error(request, str(e.message if hasattr(e, 'message') else e))
@@ -122,11 +124,12 @@ def stock_out_view(request, product_id):
         product = get_object_or_404(Product, pk=product_id, shop=shop)
     else:
         product = get_object_or_404(Product, pk=product_id)
-    form = StockOutForm(request.POST)
+    form = StockOutForm(request.POST, shop=shop)
     next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or 'product_detail'
 
     if form.is_valid():
         quantity = form.cleaned_data['quantity']
+        location = form.cleaned_data['location']
         reason = form.cleaned_data['reason']
         reference = form.cleaned_data.get('reference', '')
 
@@ -137,11 +140,12 @@ def stock_out_view(request, product_id):
                 quantity=quantity,
                 user=request.user,
                 reason=reason,
-                reference=reference
+                reference=reference,
+                location=location,
             )
             messages.success(
                 request,
-                f"Stock OUT recorded: Dispatched {quantity} units from '{product.name}'. Remaining: {product.quantity} units."
+                f"Stock OUT recorded: Dispatched {quantity} units of '{product.name}' from {location.name}. Remaining: {product.quantity} units."
             )
         except ValidationError as e:
             messages.error(request, str(e.message if hasattr(e, 'message') else e))
@@ -207,6 +211,7 @@ def stock_movement_create_view(request):
             qty = form.cleaned_data['quantity']
             reason = form.cleaned_data['reason']
             ref = form.cleaned_data.get('reference', '')
+            location = form.cleaned_data.get('location')
 
             try:
                 if m_type == StockMovementType.ADJUSTMENT:
@@ -217,7 +222,7 @@ def stock_movement_create_view(request):
                         user=request.user,
                         reason=reason,
                         reference=ref,
-                        new_target_quantity=qty
+                        new_target_quantity=qty,
                     )
                 else:
                     StockMovementService.record_movement(
@@ -226,7 +231,8 @@ def stock_movement_create_view(request):
                         quantity=qty,
                         user=request.user,
                         reason=reason,
-                        reference=ref
+                        reference=ref,
+                        location=location,
                     )
                 messages.success(request, f"Successfully recorded {m_type} operation for '{product.name}'.")
                 return redirect('stock_movements')

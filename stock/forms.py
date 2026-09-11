@@ -82,6 +82,12 @@ class StockTransferForm(forms.Form):
 
 
 class StockInForm(forms.Form):
+    location = forms.ModelChoiceField(
+        queryset=InventoryLocation.objects.none(),
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        label="Restock To Location",
+        help_text="Choose the physical location receiving these units."
+    )
     quantity = forms.IntegerField(
         min_value=1,
         widget=forms.NumberInput(attrs={
@@ -111,8 +117,21 @@ class StockInForm(forms.Form):
         label="Reference / Document #"
     )
 
+    def __init__(self, *args, shop=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        locations = InventoryLocation.objects.filter(is_active=True)
+        if shop:
+            locations = locations.filter(shop=shop)
+        self.fields['location'].queryset = locations.order_by('name')
+
 
 class StockOutForm(forms.Form):
+    location = forms.ModelChoiceField(
+        queryset=InventoryLocation.objects.none(),
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        label="Dispatch From Location",
+        help_text="Choose the physical location these units are leaving."
+    )
     quantity = forms.IntegerField(
         min_value=1,
         widget=forms.NumberInput(attrs={
@@ -141,6 +160,13 @@ class StockOutForm(forms.Form):
         }),
         label="Reference / Document #"
     )
+
+    def __init__(self, *args, shop=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        locations = InventoryLocation.objects.filter(is_active=True)
+        if shop:
+            locations = locations.filter(shop=shop)
+        self.fields['location'].queryset = locations.order_by('name')
 
 
 class StockAdjustmentForm(forms.Form):
@@ -184,6 +210,12 @@ class StockMovementActionForm(forms.Form):
         choices=StockMovementType.choices,
         widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_movement_type'})
     )
+    location = forms.ModelChoiceField(
+        queryset=InventoryLocation.objects.none(),
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_movement_location'}),
+        label="Location"
+    )
     quantity = forms.IntegerField(
         min_value=0,
         widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Quantity', 'id': 'id_movement_quantity'})
@@ -203,4 +235,15 @@ class StockMovementActionForm(forms.Form):
         super().__init__(*args, **kwargs)
         if self.shop:
             self.fields['product'].queryset = Product.objects.filter(shop=self.shop).order_by('name')
+        locations = InventoryLocation.objects.filter(is_active=True)
+        if self.shop:
+            locations = locations.filter(shop=self.shop)
+        self.fields['location'].queryset = locations.order_by('name')
 
+    def clean(self):
+        cleaned_data = super().clean()
+        movement_type = cleaned_data.get('movement_type')
+        location = cleaned_data.get('location')
+        if movement_type in (StockMovementType.IN, StockMovementType.OUT) and not location:
+            self.add_error('location', 'Select the physical location for this stock movement.')
+        return cleaned_data

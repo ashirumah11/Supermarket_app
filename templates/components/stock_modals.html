@@ -35,6 +35,20 @@
             <div class="form-text">Must be a positive whole number greater than 0.</div>
           </div>
 
+          <!-- Physical Location -->
+          <div class="mb-3">
+            <label for="quickStockLocation" class="form-label fw-semibold">
+              <span id="quickStockLocationLabel">Restock To Location</span> <span class="text-danger">*</span>
+            </label>
+            <select name="location" id="quickStockLocation" class="form-select" required>
+              <option value="">Select a location...</option>
+              {% for location in stock_in_form.location.field.queryset %}
+                <option value="{{ location.pk }}">{{ location.name }} ({{ location.code }})</option>
+              {% endfor %}
+            </select>
+            <div class="form-text" id="quickStockLocationHelp">Choose the physical location receiving these units.</div>
+          </div>
+
           <!-- Reason Input -->
           <div class="mb-3">
             <label for="id_reason" class="form-label fw-semibold">Operational Reason <span class="text-danger">*</span></label>

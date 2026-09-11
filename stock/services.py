@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Sum
 from inventory.models import InventoryLocation, InventoryStock, Product
 from notifications.services import NotificationService
 from .models import StockMovement, StockMovementType, StockTransfer
@@ -22,7 +23,51 @@ class StockMovementService:
             previous_quantity = locked_product.quantity
             previous_status = locked_product.stock_status
 
-            if movement_type == StockMovementType.IN:
+            # When a physical location is supplied, its InventoryStock record
+            # is the source of truth for this movement as well as the audit log.
+            if location and movement_type in (StockMovementType.IN, StockMovementType.OUT):
+                location_stock = (
+                    InventoryStock.objects.select_for_update()
+                    .filter(product=locked_product, location=location)
+                    .first()
+                )
+
+                if movement_type == StockMovementType.IN:
+                    if quantity is None or quantity <= 0:
+                        raise ValidationError("Stock IN quantity must be a positive integer greater than zero.")
+                    if location_stock is None:
+                        location_stock = InventoryStock.objects.create(
+                            product=locked_product,
+                            location=location,
+                            quantity=0,
+                            minimum_stock=locked_product.minimum_stock,
+                            maximum_stock=locked_product.maximum_stock,
+                        )
+                        location_stock = InventoryStock.objects.select_for_update().get(pk=location_stock.pk)
+                    location_stock.quantity += quantity
+                    location_stock.save(update_fields=['quantity', 'updated_at'])
+                    movement_delta = quantity
+
+                else:
+                    if quantity is None or quantity <= 0:
+                        raise ValidationError("Stock OUT quantity must be a positive integer greater than zero.")
+                    available = location_stock.quantity if location_stock else 0
+                    if quantity > available:
+                        raise ValidationError(
+                            f"Stock OUT of {quantity} units exceeds stock available at '{location.name}' "
+                            f"({available} units)."
+                        )
+                    location_stock.quantity -= quantity
+                    location_stock.save(update_fields=['quantity', 'updated_at'])
+                    movement_delta = quantity
+
+                # Keep the catalog total synchronized with all physical locations.
+                new_quantity = (
+                    InventoryStock.objects.filter(product=locked_product)
+                    .aggregate(total=Sum('quantity'))['total'] or 0
+                )
+
+            elif movement_type == StockMovementType.IN:
                 if quantity is None or quantity <= 0:
                     raise ValidationError("Stock IN quantity must be a positive integer greater than zero.")
                 new_quantity = previous_quantity + quantity
