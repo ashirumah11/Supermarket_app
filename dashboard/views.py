@@ -21,10 +21,12 @@ def dashboard_view(request):
     low_stock_count = products.filter(quantity__gt=0, quantity__lte=F('minimum_stock')).count()
     in_stock_count = products.filter(quantity__gt=F('minimum_stock')).count()
 
-    # Total inventory valuation: sum(price * quantity)
-    inventory_val = products.aggregate(
-        total_val=Sum(F('price') * F('quantity'))
-    )['total_val'] or Decimal('0.00')
+    # Stock valuation is financial information available only to managers and admins.
+    inventory_val = None
+    if request.user.is_manager_user:
+        inventory_val = products.aggregate(
+            total_val=Sum(F('price') * F('quantity'))
+        )['total_val'] or Decimal('0.00')
 
     # Calculate inventory health percentages for visual bars
     if total_products > 0:
@@ -50,7 +52,6 @@ def dashboard_view(request):
         'out_of_stock_count': out_of_stock_count,
         'low_stock_count': low_stock_count,
         'in_stock_count': in_stock_count,
-        'inventory_value': inventory_val,
         'in_stock_pct': in_stock_pct,
         'low_stock_pct': low_stock_pct,
         'out_of_stock_pct': out_of_stock_pct,
@@ -61,4 +62,6 @@ def dashboard_view(request):
         'stock_in_form': StockInForm(),
         'stock_out_form': StockOutForm(),
     }
+    if request.user.is_manager_user:
+        context['inventory_value'] = inventory_val
     return render(request, 'dashboard/dashboard.html', context)

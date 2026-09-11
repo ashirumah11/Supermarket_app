@@ -64,18 +64,20 @@
       </div>
     </div>
 
-    <div class="col-sm-12 col-xl-4">
-      <div class="kpi-card h-100 bg-white" style="border-left: 4px solid #10b981;">
-        <div>
-          <div class="kpi-title">Location Stock Valuation</div>
-          <div class="kpi-value text-dark">KES {{ total_value|floatformat:2|intcomma }}</div>
-          <div class="kpi-subtitle text-muted">Asset value stored at this facility</div>
-        </div>
-        <div class="kpi-icon-box kpi-icon-value">
-          <i class="bi bi-cash-stack"></i>
+    {% if is_manager %}
+      <div class="col-sm-12 col-xl-4">
+        <div class="kpi-card h-100 bg-white" style="border-left: 4px solid #10b981;">
+          <div>
+            <div class="kpi-title">Location Stock Valuation</div>
+            <div class="kpi-value text-dark">KES {{ total_value|floatformat:2|intcomma }}</div>
+            <div class="kpi-subtitle text-muted">Asset value stored at this facility</div>
+          </div>
+          <div class="kpi-icon-box kpi-icon-value">
+            <i class="bi bi-cash-stack"></i>
+          </div>
         </div>
       </div>
-    </div>
+    {% endif %}
   </div>
 
   <!-- Main Content Grid -->

@@ -544,16 +544,15 @@ def location_detail_view(request, pk):
     stocks = location.stocks.select_related('product', 'product__category').order_by('product__name')
     recent_movements = location.movements.select_related('product', 'user').order_by('-created_at')[:10]
 
-    total_value = location.stocks.aggregate(
-        val=Sum(F('quantity') * F('product__price'))
-    )['val'] or 0
-
     context = {
         'location': location,
         'stocks': stocks,
         'recent_movements': recent_movements,
-        'total_value': total_value,
     }
+    if request.user.is_manager_user:
+        context['total_value'] = location.stocks.aggregate(
+            val=Sum(F('quantity') * F('product__price'))
+        )['val'] or 0
     return render(request, 'locations/location_detail.html', context)
 
 

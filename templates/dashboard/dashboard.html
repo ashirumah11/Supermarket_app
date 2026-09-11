@@ -87,19 +87,21 @@
       </div>
     </div>
 
-    <!-- Inventory Valuation -->
-    <div class="col-sm-12 col-xl-4">
-      <div class="kpi-card h-100 bg-white" style="border-left: 4px solid #10b981;">
-        <div>
-          <div class="kpi-title">Estimated Stock Valuation</div>
-          <div class="kpi-value text-dark">KES {{ inventory_value|floatformat:2|intcomma }}</div>
-          <div class="kpi-subtitle text-muted">Retail asset value across all items</div>
-        </div>
-        <div class="kpi-icon-box kpi-icon-value">
-          <i class="bi bi-cash-stack"></i>
+    {% if is_manager %}
+      <!-- Inventory Valuation -->
+      <div class="col-sm-12 col-xl-4">
+        <div class="kpi-card h-100 bg-white" style="border-left: 4px solid #10b981;">
+          <div>
+            <div class="kpi-title">Estimated Stock Valuation</div>
+            <div class="kpi-value text-dark">KES {{ inventory_value|floatformat:2|intcomma }}</div>
+            <div class="kpi-subtitle text-muted">Retail asset value across all items</div>
+          </div>
+          <div class="kpi-icon-box kpi-icon-value">
+            <i class="bi bi-cash-stack"></i>
+          </div>
         </div>
       </div>
-    </div>
+    {% endif %}
   </div>
 
   <!-- Inventory Health Distribution Visual Section -->
