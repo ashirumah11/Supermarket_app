@@ -1,0 +1,541 @@
+{% extends 'base_app.html' %}
+{% load humanize %}
+
+{% block title %}Transaction Reports & Receipts — StockFlow{% endblock %}
+{% block page_title %}Reports & Stock Audit{% endblock %}
+{% block page_subtitle %}Comprehensive historical reporting, transaction auditing, and inventory receipt generation{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+
+  <!-- Nav Tabs to toggle between Executive Valuation (existing) and Transaction Reports (extension) -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom pb-3 mb-4 gap-3">
+    <ul class="nav nav-pills gap-2">
+      <li class="nav-item">
+        <a class="nav-link {% if active_tab == 'transactions' %}active bg-sf-navy text-white fw-bold shadow-sm{% else %}text-muted{% endif %}" href="{% url 'transaction_reports' %}">
+          <i class="bi bi-clock-history me-1"></i> Transaction Reports & Receipts
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link {% if active_tab == 'valuation' %}active bg-sf-navy text-white fw-bold shadow-sm{% else %}text-muted{% endif %}" href="{% url 'reports' %}">
+          <i class="bi bi-pie-chart me-1"></i> Stock Valuation & Inventory Health
+        </a>
+      </li>
+    </ul>
+
+    <!-- Quick Action Buttons -->
+    <div class="d-flex flex-wrap align-items-center gap-2 d-print-none">
+      <button type="button" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" onclick="window.print()">
+        <i class="bi bi-printer"></i> Print Report
+      </button>
+      <a href="{% url 'transaction_receipt' %}?{{ request.GET.urlencode }}" class="btn btn-sf-primary btn-sm d-flex align-items-center gap-1" target="_blank">
+        <i class="bi bi-receipt"></i> Generate Receipt
+      </a>
+      <a href="{% url 'export_transactions_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1">
+        <i class="bi bi-file-earmark-pdf"></i> Export PDF
+      </a>
+      <a href="{% url 'export_transactions_csv' %}?{{ request.GET.urlencode }}" class="btn btn-outline-success btn-sm d-flex align-items-center gap-1">
+        <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
+      </a>
+    </div>
+  </div>
+
+  <!-- Store Identity Header (Appears in print & top of page) -->
+  <div class="p-3 bg-white rounded-3 border mb-4 d-flex justify-content-between align-items-center">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-shop text-success fs-3"></i>
+        <div>
+          <h3 class="h5 fw-bold text-dark mb-0">{{ store.name }}</h3>
+          <span class="text-muted small">Facility: <strong>{{ store.branch_name }}</strong> &bull; {{ store.address }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="text-end small text-muted">
+      <div>TAX PIN / REG: <span class="font-monospace text-dark fw-bold">{{ store.tax_pin }}</span></div>
+      <div>Current Local Time: <span class="text-dark fw-semibold">{{ now|date:"d M Y, H:i" }}</span></div>
+    </div>
+  </div>
+
+  <!-- Interactive Filter Form Card -->
+  <div class="card card-sf mb-4 d-print-none">
+    <div class="card-header bg-white py-3 px-4 border-bottom">
+      <h6 class="fw-bold text-dark mb-0">
+        <i class="bi bi-funnel-fill text-primary me-2"></i>Report Configuration & Transaction Filters
+      </h6>
+    </div>
+    <div class="card-body p-4">
+      <form method="get" action="{% url 'transaction_reports' %}" id="reportFilterForm">
+        <div class="row g-3">
+
+          <!-- 1. Report Period Selector -->
+          <div class="col-md-3">
+            <label class="form-label small fw-bold text-dark mb-1">
+              <i class="bi bi-calendar-range me-1"></i> Report Period:
+            </label>
+            <select name="period" id="periodSelector" class="form-select form-select-sm" onchange="togglePeriodControls()">
+              {% for val, label in period_options %}
+                <option value="{{ val }}" {% if selected_period == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Dynamic Period Controls: Specific Date -->
+          <div class="col-md-3 period-ctrl" id="ctrl_specific_date" style="display: none;">
+            <label class="form-label small fw-bold text-dark mb-1">Select Date:</label>
+            <input type="date" name="specific_date" value="{{ selected_date }}" class="form-control form-control-sm">
+          </div>
+
+          <!-- Dynamic Period Controls: Specific Week -->
+          <div class="col-md-3 period-ctrl" id="ctrl_specific_week" style="display: none;">
+            <label class="form-label small fw-bold text-dark mb-1">Select Week (or Date in Week):</label>
+            <input type="date" name="specific_week" value="{{ selected_week }}" class="form-control form-control-sm">
+          </div>
+
+          <!-- Dynamic Period Controls: Specific Month -->
+          <div class="col-md-3 period-ctrl" id="ctrl_specific_month" style="display: none;">
+            <div class="row g-1">
+              <div class="col-7">
+                <label class="form-label small fw-bold text-dark mb-1">Month:</label>
+                <select name="specific_month" class="form-select form-select-sm">
+                  {% for m_num, m_name in months_list %}
+                    <option value="{{ m_num }}" {% if selected_month == m_num|stringformat:"s" %}selected{% endif %}>{{ m_name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-5">
+                <label class="form-label small fw-bold text-dark mb-1">Year:</label>
+                <select name="specific_year" class="form-select form-select-sm">
+                  {% for yr in years_list %}
+                    <option value="{{ yr }}" {% if selected_year == yr|stringformat:"s" %}selected{% endif %}>{{ yr }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Period Controls: Specific Year -->
+          <div class="col-md-3 period-ctrl" id="ctrl_specific_year" style="display: none;">
+            <label class="form-label small fw-bold text-dark mb-1">Select Year:</label>
+            <select name="specific_year" class="form-select form-select-sm">
+              {% for yr in years_list %}
+                <option value="{{ yr }}" {% if selected_year == yr|stringformat:"s" %}selected{% endif %}>{{ yr }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Dynamic Period Controls: Custom Date Range -->
+          <div class="col-md-3 period-ctrl" id="ctrl_custom" style="display: none;">
+            <div class="row g-1">
+              <div class="col-6">
+                <label class="form-label small fw-bold text-dark mb-1">From:</label>
+                <input type="date" name="start_date" value="{{ selected_start_date }}" class="form-control form-control-sm">
+              </div>
+              <div class="col-6">
+                <label class="form-label small fw-bold text-dark mb-1">To:</label>
+                <input type="date" name="end_date" value="{{ selected_end_date }}" class="form-control form-control-sm">
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Performed By (User Filter) -->
+          <div class="col-md-2">
+            <label class="form-label small fw-bold text-dark mb-1">
+              <i class="bi bi-person me-1"></i> Performed By:
+            </label>
+            <select name="user" class="form-select form-select-sm" {% if not is_manager %}disabled{% endif %}>
+              <option value="">All Users / Operators</option>
+              {% for u in users %}
+                <option value="{{ u.id }}" {% if selected_user == u.id|stringformat:"s" %}selected{% endif %}>
+                  {{ u.get_full_name|default:u.username }} ({{ u.get_role_display }})
+                </option>
+              {% endfor %}
+            </select>
+            {% if not is_manager %}
+              <input type="hidden" name="user" value="{{ request.user.id }}">
+            {% endif %}
+          </div>
+
+          <!-- 3. Transaction Type Filter -->
+          <div class="col-md-2">
+            <label class="form-label small fw-bold text-dark mb-1">
+              <i class="bi bi-arrow-left-right me-1"></i> Type:
+            </label>
+            <select name="type" class="form-select form-select-sm">
+              <option value="">All Types</option>
+              {% for val, label in movement_types %}
+                <option value="{{ val }}" {% if selected_type == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- 4. Product Filter -->
+          <div class="col-md-2">
+            <label class="form-label small fw-bold text-dark mb-1">
+              <i class="bi bi-box me-1"></i> Product:
+            </label>
+            <select name="product" class="form-select form-select-sm">
+              <option value="">All Products</option>
+              {% for p in products %}
+                <option value="{{ p.id }}" {% if selected_product == p.id|stringformat:"s" %}selected{% endif %}>{{ p.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+        </div>
+
+        <div class="row g-2 mt-2 align-items-center">
+          <div class="col-md-4">
+            <input type="text" name="q" value="{{ selected_query }}" class="form-control form-control-sm" placeholder="Search reference, reason, SKU, or user...">
+          </div>
+          <div class="col-auto d-flex gap-2">
+            <button type="submit" class="btn btn-sf-primary btn-sm px-3 fw-semibold">
+              <i class="bi bi-search me-1"></i> Generate Report
+            </button>
+            <a href="{% url 'transaction_reports' %}" class="btn btn-outline-secondary btn-sm" title="Reset all filters">
+              Reset
+            </a>
+          </div>
+          <div class="col text-end small text-muted">
+            Active Filter: <span class="badge bg-light text-dark border">{{ period_data.label }}</span>
+            {% if selected_type %}<span class="badge bg-light text-dark border">{{ selected_type }}</span>{% endif %}
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Period & Scope Notification Banner -->
+  <div class="alert alert-light border rounded-3 p-3 mb-4 d-flex justify-content-between align-items-center">
+    <div>
+      <span class="badge bg-sf-navy text-white text-uppercase px-2 py-1 me-2">{{ period_data.period|upper }}</span>
+      <strong class="text-dark fs-6">{{ period_data.label }}</strong>
+      <span class="text-muted small ms-2">
+        ({{ period_data.start_date|date:"F d, Y" }} &rarr; {{ period_data.end_date|date:"F d, Y" }})
+      </span>
+    </div>
+    <div class="small text-muted">
+      Found <strong>{{ summary.total_transactions }}</strong> matching operations
+    </div>
+  </div>
+
+  <!-- Key Aggregate Summary Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+      <div class="p-3 bg-white rounded-3 border h-100 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <small class="text-muted text-uppercase fw-semibold">Total Operations</small>
+          <i class="bi bi-card-checklist text-primary fs-5"></i>
+        </div>
+        <div class="h3 fw-bold text-dark mb-0">{{ summary.total_transactions }}</div>
+        <div class="small text-muted mt-1">{{ summary.unique_products_count }} unique products involved</div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="p-3 bg-white rounded-3 border h-100 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <small class="text-muted text-uppercase fw-semibold">Stock IN Volume</small>
+          <i class="bi bi-box-arrow-in-down text-success fs-5"></i>
+        </div>
+        <div class="h3 fw-bold text-success mb-0">+{{ summary.stock_in_units|intcomma }} <small class="fs-6 text-muted">units</small></div>
+        <div class="small text-muted mt-1">{{ summary.stock_in_count }} deliveries / restocks</div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="p-3 bg-white rounded-3 border h-100 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <small class="text-muted text-uppercase fw-semibold">Stock OUT Volume</small>
+          <i class="bi bi-box-arrow-up text-danger fs-5"></i>
+        </div>
+        <div class="h3 fw-bold text-danger mb-0">-{{ summary.stock_out_units|intcomma }} <small class="fs-6 text-muted">units</small></div>
+        <div class="small text-muted mt-1">{{ summary.stock_out_count }} dispatches / sales</div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="p-3 bg-white rounded-3 border h-100 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <small class="text-muted text-uppercase fw-semibold">Audit Reconciliations</small>
+          <i class="bi bi-sliders text-info fs-5"></i>
+        </div>
+        <div class="h3 fw-bold text-primary mb-0">{{ summary.adjust_count }} <small class="fs-6 text-muted">events</small></div>
+        <div class="small text-muted mt-1">{{ summary.adjust_units|intcomma }} units calibrated</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline Breakdown for Monthly/Yearly views -->
+  {% if summary.timeline_breakdown %}
+    <div class="card card-sf mb-4">
+      <div class="card-header bg-white py-3 px-4 border-bottom">
+        <h6 class="fw-bold mb-0 text-dark">
+          <i class="bi bi-bar-chart-steps text-primary me-2"></i>Period Chronological Activity Breakdown
+        </h6>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sf mb-0">
+            <thead>
+              <tr>
+                <th>Timeline Interval</th>
+                <th class="text-center">Operations Count</th>
+                <th class="text-center text-success">Stock IN (Units)</th>
+                <th class="text-center text-danger">Stock OUT (Units)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for interval in summary.timeline_breakdown %}
+                <tr>
+                  <td><strong>{{ interval.label }}</strong></td>
+                  <td class="text-center fw-bold">{{ interval.tx_count }}</td>
+                  <td class="text-center text-success fw-semibold">+{{ interval.in_units|intcomma }}</td>
+                  <td class="text-center text-danger fw-semibold">-{{ interval.out_units|intcomma }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Audit Ledger Table -->
+  <div class="card card-sf mb-4">
+    <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="fw-bold mb-0 text-dark">Detailed Stock Movement Ledger</h5>
+        <small class="text-muted">Showing {{ transactions.paginator.count }} transactions matching report criteria</small>
+      </div>
+      <div>
+        <span class="badge bg-light text-dark border">Page {{ transactions.number }} of {{ transactions.paginator.num_pages }}</span>
+      </div>
+    </div>
+
+    <div class="card-body p-0">
+      {% if transactions %}
+        <div class="table-responsive">
+          <table class="table table-sf mb-0 align-middle">
+            <thead>
+              <tr>
+                <th>Date & Time</th>
+                <th>Voucher / Ref</th>
+                <th>Product & SKU</th>
+                <th>Type</th>
+                <th class="text-center">Units Changed</th>
+                <th class="text-center">Stock Flow</th>
+                <th>Reason / Justification</th>
+                <th>Operator</th>
+                <th class="text-end d-print-none">Traceability</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for m in transactions %}
+                <tr>
+                  <td>
+                    <div class="fw-semibold text-dark">{{ m.created_at|date:"d M Y" }}</div>
+                    <small class="text-muted font-monospace">{{ m.created_at|date:"H:i:s" }}</small>
+                  </td>
+                  <td>
+                    <span class="font-monospace small fw-bold text-dark d-block">{{ m.receipt_number }}</span>
+                    {% if m.reference %}
+                      <small class="text-muted font-monospace">{{ m.reference }}</small>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <a href="{% url 'product_detail' pk=m.product.pk %}" class="fw-bold text-dark text-decoration-none d-block">
+                      {{ m.product.name }}
+                    </a>
+                    <span class="font-monospace small text-muted">{{ m.product.sku }}</span>
+                  </td>
+                  <td>
+                    <span class="{{ m.badge_class }}">{{ m.get_type_display }}</span>
+                  </td>
+                  <td class="text-center">
+                    <span class="fw-bold fs-6 {% if m.type == 'OUT' %}text-danger{% elif m.type == 'IN' %}text-success{% else %}text-primary{% endif %}">
+                      {% if m.type == 'OUT' %}-{% elif m.type == 'IN' %}+{% endif %}{{ m.quantity }}
+                    </span>
+                  </td>
+                  <td class="text-center small text-muted">
+                    {{ m.previous_quantity }} &rarr; <strong class="text-dark">{{ m.new_quantity }}</strong>
+                  </td>
+                  <td>
+                    <span class="text-dark">{{ m.reason }}</span>
+                    {% if m.location %}
+                      <div class="small text-muted"><i class="bi bi-geo-alt me-1"></i>{{ m.location.name }}</div>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <strong class="text-dark d-block">
+                      {{ m.user.get_full_name|default:m.user.username|default:"System" }}
+                    </strong>
+                    {% if m.user %}
+                      <span class="{{ m.user.role_badge_class }} small">{{ m.user.get_role_display }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-end d-print-none">
+                    <div class="d-inline-flex gap-1">
+                      <button type="button" class="btn btn-sm btn-outline-primary" onclick="openTraceModal('{{ m.pk }}')" title="Trace Full Details">
+                        <i class="bi bi-search"></i>
+                      </button>
+                      <a href="{% url 'movement_receipt' pk=m.pk %}" target="_blank" class="btn btn-sm btn-outline-secondary" title="View Single Voucher">
+                        <i class="bi bi-printer"></i>
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        {% if transactions.has_other_pages %}
+          <div class="p-3 border-top d-flex justify-content-between align-items-center d-print-none">
+            <span class="text-muted small">
+              Showing {{ transactions.start_index }} to {{ transactions.end_index }} of {{ transactions.paginator.count }} records
+            </span>
+            <ul class="pagination pagination-sm mb-0">
+              {% if transactions.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ transactions.previous_page_number }}&{{ request.GET.urlencode }}">&laquo; Prev</a>
+                </li>
+              {% endif %}
+              <li class="page-item active">
+                <span class="page-link">{{ transactions.number }}</span>
+              </li>
+              {% if transactions.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ transactions.next_page_number }}&{{ request.GET.urlencode }}">Next &raquo;</a>
+                </li>
+              {% endif %}
+            </ul>
+          </div>
+        {% endif %}
+
+      {% else %}
+        <div class="p-5 text-center">
+          <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
+          <h5 class="fw-bold text-dark">No stock movements found</h5>
+          <p class="text-muted small">No transactions matched your selected filters and period. Try selecting a broader period or clearing the filters.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Official Certification Block (Appears in Print) -->
+  <div class="card card-sf mt-4">
+    <div class="card-body p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0 text-dark">
+          <i class="bi bi-shield-check text-success me-2"></i>Official Store Inventory Audit Certification
+        </h6>
+        <small class="text-muted">Generated by StockFlow for {{ store.name }} ({{ store.branch_name }})</small>
+      </div>
+      <p class="small text-muted mb-4">
+        This document represents an authoritative audit log of all inventory operations registered in the ledger for period: <strong>{{ period_data.label }}</strong>.
+      </p>
+
+      <div class="row pt-4 mt-2">
+        <div class="col-4 text-center">
+          <div style="border-top: 1px dashed #94a3b8; padding-top: 0.5rem;" class="small">
+            <strong class="text-dark d-block">Authorized Operator / Auditor</strong>
+            <span class="text-muted">Signature & Date</span>
+          </div>
+        </div>
+        <div class="col-4 text-center">
+          <div style="border-top: 1px dashed #94a3b8; padding-top: 0.5rem;" class="small">
+            <strong class="text-dark d-block">Store Branch Manager</strong>
+            <span class="text-muted">Signature & Date</span>
+          </div>
+        </div>
+        <div class="col-4 text-center">
+          <div style="border-top: 1px dashed #94a3b8; padding-top: 0.5rem;" class="small">
+            <strong class="text-dark d-block">Finance & Store Seal</strong>
+            <span class="text-muted">Official Stamp</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal Container for Traceability Detail -->
+<div class="modal fade" id="traceModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" id="traceModalContent">
+      <div class="p-5 text-center text-muted">
+        <div class="spinner-border text-primary mb-2" role="status"></div>
+        <div>Loading transaction audit details...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function togglePeriodControls() {
+  const period = document.getElementById('periodSelector').value;
+  // Hide all dynamic controls first
+  document.querySelectorAll('.period-ctrl').forEach(el => el.style.display = 'none');
+
+  if (period === 'specific_date') {
+    const el = document.getElementById('ctrl_specific_date');
+    if (el) el.style.display = 'block';
+  } else if (period === 'specific_week') {
+    const el = document.getElementById('ctrl_specific_week');
+    if (el) el.style.display = 'block';
+  } else if (period === 'specific_month') {
+    const el = document.getElementById('ctrl_specific_month');
+    if (el) el.style.display = 'block';
+  } else if (period === 'specific_year') {
+    const el = document.getElementById('ctrl_specific_year');
+    if (el) el.style.display = 'block';
+  } else if (period === 'custom') {
+    const el = document.getElementById('ctrl_custom');
+    if (el) el.style.display = 'block';
+  }
+}
+
+function openTraceModal(movementId) {
+  const modalElem = document.getElementById('traceModal');
+  const contentElem = document.getElementById('traceModalContent');
+  const modal = new bootstrap.Modal(modalElem);
+
+  contentElem.innerHTML = `
+    <div class="p-5 text-center text-muted">
+      <div class="spinner-border text-primary mb-2" role="status"></div>
+      <div>Loading transaction audit details...</div>
+    </div>
+  `;
+  modal.show();
+
+  fetch(`/reports/transactions/${movementId}/modal/`)
+    .then(res => {
+      if (!res.ok) throw new Error('Failed to load transaction details');
+      return res.text();
+    })
+    .then(html => {
+      contentElem.innerHTML = html;
+    })
+    .catch(err => {
+      contentElem.innerHTML = `
+        <div class="modal-body p-4 text-center text-danger">
+          <i class="bi bi-exclamation-triangle fs-2 d-block mb-2"></i>
+          <h5>Error loading audit record</h5>
+          <p class="small text-muted mb-3">${err.message}</p>
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        </div>
+      `;
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  togglePeriodControls();
+});
+</script>
+{% endblock %}

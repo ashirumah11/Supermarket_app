@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory Transaction Receipt — {{ store.name }} ({{ period_data.label }})</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+      padding: 2rem 0;
+    }
+    .receipt-container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 3rem;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+      border: 1px solid #e2e8f0;
+    }
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .receipt-header {
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .store-brand-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #0f172a;
+    }
+    .store-branch-badge {
+      font-size: 0.8rem;
+      background: #e2e8f0;
+      color: #334155;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .receipt-banner {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .transaction-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.75rem;
+      background: #ffffff;
+      page-break-inside: avoid;
+    }
+    .badge-in {
+      background-color: #dcfce7;
+      color: #15803d;
+      font-weight: 700;
+    }
+    .badge-out {
+      background-color: #fee2e2;
+      color: #b91c1c;
+      font-weight: 700;
+    }
+    .badge-adj {
+      background-color: #e0f2fe;
+      color: #0369a1;
+      font-weight: 700;
+    }
+    .badge-transfer {
+      background-color: #ede9fe;
+      color: #6d28d9;
+      font-weight: 700;
+    }
+    .signature-box {
+      border-top: 1px dashed #94a3b8;
+      padding-top: 0.5rem;
+      margin-top: 2.5rem;
+      text-align: center;
+      font-size: 0.85rem;
+    }
+    @media print {
+      body {
+        background-color: #ffffff;
+        padding: 0;
+      }
+      .receipt-container {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+        max-width: 100%;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Control Bar (Hidden when printing) -->
+<div class="container mb-4 no-print text-center">
+  <div class="d-inline-flex flex-wrap align-items-center gap-2 bg-white p-2 rounded-3 border shadow-sm">
+    <button onclick="window.print()" class="btn btn-primary btn-sm px-3 fw-semibold">
+      <i class="bi bi-printer me-1"></i> Print Receipt Document
+    </button>
+    <a href="{% url 'export_receipt_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-outline-danger btn-sm px-3 fw-semibold">
+      <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
+    </a>
+    <a href="{% url 'transaction_reports' %}?{{ request.GET.urlencode }}" class="btn btn-outline-secondary btn-sm px-3">
+      <i class="bi bi-arrow-left me-1"></i> Back to Reports
+    </a>
+  </div>
+</div>
+
+<div class="receipt-container">
+  <!-- Supermarket Brand & Header -->
+  <div class="receipt-header d-flex justify-content-between align-items-start">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <h1 class="store-brand-title mb-0">{{ store.name }}</h1>
+        <span class="store-branch-badge">{{ store.branch_name }}</span>
+      </div>
+      <div class="text-muted small">
+        <div><i class="bi bi-geo-alt me-1"></i> {{ store.address }}</div>
+        <div><i class="bi bi-telephone me-1"></i> {{ store.phone }} &nbsp;|&nbsp; <i class="bi bi-envelope me-1"></i> {{ store.email }}</div>
+        {% if store.tax_pin %}
+          <div><strong>TAX PIN / REG:</strong> <span class="mono">{{ store.tax_pin }}</span></div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="text-end">
+      <span class="badge bg-dark text-white px-3 py-2 fs-6 text-uppercase fw-bold mb-1 d-inline-block">
+        Official Receipt
+      </span>
+      <div class="mono small text-muted">ID: SF-DOC-{{ period_data.start_date|date:"Ymd" }}-{{ transactions|length }}</div>
+    </div>
+  </div>
+
+  <!-- Document Title & Period Banner -->
+  <div class="receipt-banner">
+    <div class="row align-items-center">
+      <div class="col-sm-7">
+        <div class="text-muted small text-uppercase fw-semibold">INVENTORY TRANSACTION RECEIPT & AUDIT VOUCHER</div>
+        <h4 class="fw-bold text-dark mb-0 mt-1">Period: {{ period_data.label }}</h4>
+        <div class="small text-muted mt-1">
+          Date Span: <span class="fw-semibold text-dark">{{ period_data.start_date|date:"F d, Y" }}</span> to <span class="fw-semibold text-dark">{{ period_data.end_date|date:"F d, Y" }}</span>
+        </div>
+      </div>
+      <div class="col-sm-5 text-sm-end mt-2 mt-sm-0 small text-muted">
+        <div>Generated by: <strong class="text-dark">{{ generated_by }}</strong> ({{ user_role }})</div>
+        <div>Generated at: <strong class="text-dark">{{ generated_at|date:"F d, Y H:i:s" }}</strong></div>
+        <div>Status: <span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold">RECONCILED & CERTIFIED</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary KPI Bar -->
+  <div class="row g-3 mb-4">
+    <div class="col-3">
+      <div class="p-3 bg-light rounded text-center border">
+        <div class="text-muted small text-uppercase">Transactions</div>
+        <div class="h4 fw-bold text-dark mb-0">{{ summary.total_transactions }}</div>
+      </div>
+    </div>
+    <div class="col-3">
+      <div class="p-3 bg-light rounded text-center border">
+        <div class="text-muted small text-uppercase">Stock IN</div>
+        <div class="h4 fw-bold text-success mb-0">+{{ summary.stock_in_units }}</div>
+        <div class="small text-muted">in {{ summary.stock_in_count }} ops</div>
+      </div>
+    </div>
+    <div class="col-3">
+      <div class="p-3 bg-light rounded text-center border">
+        <div class="text-muted small text-uppercase">Stock OUT</div>
+        <div class="h4 fw-bold text-danger mb-0">-{{ summary.stock_out_units }}</div>
+        <div class="small text-muted">in {{ summary.stock_out_count }} ops</div>
+      </div>
+    </div>
+    <div class="col-3">
+      <div class="p-3 bg-light rounded text-center border">
+        <div class="text-muted small text-uppercase">Adjustments</div>
+        <div class="h4 fw-bold text-primary mb-0">{{ summary.adjust_count }}</div>
+        <div class="small text-muted">{{ summary.adjust_units }} units</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detailed Transactions List -->
+  <h5 class="fw-bold text-dark mb-3">Itemized Transaction Summary ({{ transactions|length }} Records)</h5>
+
+  {% if transactions %}
+    <div class="mb-4">
+      {% for m in transactions %}
+        <div class="transaction-card">
+          <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom pb-2 mb-2">
+            <div>
+              <span class="mono small text-muted me-2">#{{ m.id }} &bull; {{ m.receipt_number }}</span>
+              <span class="badge {% if m.type == 'IN' %}badge-in{% elif m.type == 'OUT' %}badge-out{% elif m.type == 'ADJUSTMENT' %}badge-adj{% else %}badge-transfer{% endif %} px-2 py-1">
+                {{ m.get_type_display }}
+              </span>
+            </div>
+            <div class="small text-muted">
+              <i class="bi bi-clock me-1"></i> {{ m.created_at|date:"d M Y" }} &bull; <strong>{{ m.created_at|date:"h:i A" }}</strong>
+            </div>
+          </div>
+
+          <div class="row align-items-center">
+            <div class="col-md-5">
+              <div class="fw-bold text-dark fs-6">{{ m.product.name }}</div>
+              <div class="mono small text-muted">SKU: {{ m.product.sku }} &bull; {{ m.product.category.name|default:"General" }}</div>
+              {% if m.location %}
+                <div class="small text-muted mt-1"><i class="bi bi-geo-alt me-1"></i> {{ m.location.name }}</div>
+              {% endif %}
+            </div>
+
+            <div class="col-md-3 text-center my-2 my-md-0">
+              <div class="small text-muted text-uppercase">Quantity Delta</div>
+              <span class="fs-5 fw-bold {% if m.type == 'OUT' %}text-danger{% elif m.type == 'IN' %}text-success{% else %}text-primary{% endif %}">
+                {% if m.type == 'OUT' %}-{% elif m.type == 'IN' %}+{% endif %}{{ m.quantity }} units
+              </span>
+              <div class="small text-muted">{{ m.previous_quantity }} &rarr; {{ m.new_quantity }} in stock</div>
+            </div>
+
+            <div class="col-md-4 text-md-end">
+              <div class="small">
+                <strong>Reason:</strong> {{ m.reason }}
+              </div>
+              {% if m.reference %}
+                <div class="mono small text-muted">Ref: {{ m.reference }}</div>
+              {% endif %}
+              <div class="small text-muted mt-1">
+                Authorized By: <strong>{{ m.user.get_full_name|default:m.user.username|default:"System" }}</strong>
+                {% if m.user %}<span class="badge bg-light text-dark border">{{ m.user.get_role_display }}</span>{% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-light border text-center p-4 my-4">
+      <i class="bi bi-inbox fs-2 text-muted d-block mb-2"></i>
+      <h6 class="fw-bold text-dark">No transactions found for this period.</h6>
+      <p class="text-muted small mb-0">No inventory movements matched the selected date parameters.</p>
+    </div>
+  {% endif %}
+
+  <!-- Certification and Signatures -->
+  <div class="mt-5 pt-3">
+    <div class="small text-muted text-center mb-4">
+      {{ store.receipt_footer_note|default:"Official Inventory Movement Record. Generated by StockFlow Smart Management System." }}
+    </div>
+
+    <div class="row pt-2">
+      <div class="col-4">
+        <div class="signature-box">
+          <strong class="d-block text-dark">{{ generated_by }}</strong>
+          <span class="text-muted">Generated By / Authorized User</span>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="signature-box">
+          <strong class="d-block text-dark">Store Branch Manager</strong>
+          <span class="text-muted">Branch Authorization & Date</span>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="signature-box">
+          <strong class="d-block text-dark">Inventory Audit & Control</strong>
+          <span class="text-muted">Official Store Stamp</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,118 @@
+{% load humanize %}
+<div class="modal-header bg-sf-navy text-white">
+  <div>
+    <h5 class="modal-title fw-bold mb-0">
+      <i class="bi bi-shield-check text-success me-2"></i>Audit Trace: Transaction #{{ movement.id }}
+    </h5>
+    <small class="text-white-50">Authoritative Ledger Record &bull; {{ movement.receipt_number }}</small>
+  </div>
+  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body p-4">
+  <div class="row g-3">
+    <!-- Key Transaction Attributes -->
+    <div class="col-12">
+      <div class="p-3 bg-light rounded-3 border d-flex justify-content-between align-items-center">
+        <div>
+          <span class="text-muted small d-block">AFFECTED PRODUCT</span>
+          <h5 class="fw-bold text-dark mb-0">{{ movement.product.name }}</h5>
+          <span class="font-monospace small text-muted">SKU: {{ movement.product.sku }} &bull; {{ movement.product.category.name|default:"Uncategorized" }}</span>
+        </div>
+        <div class="text-end">
+          <span class="{{ movement.badge_class }} fs-6 px-3 py-1">{{ movement.get_type_display }}</span>
+          <div class="fw-bold fs-5 mt-1 {% if movement.type == 'OUT' %}text-danger{% elif movement.type == 'IN' %}text-success{% else %}text-primary{% endif %}">
+            {% if movement.type == 'OUT' %}-{% elif movement.type == 'IN' %}+{% endif %}{{ movement.quantity }} units
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Traceability Grid -->
+    <div class="col-sm-6">
+      <div class="border rounded p-3 h-100">
+        <div class="text-muted small text-uppercase fw-semibold mb-2">
+          <i class="bi bi-person-badge text-primary me-1"></i> Authorized Operator
+        </div>
+        <div>
+          <strong class="text-dark fs-6">{{ movement.user.get_full_name|default:movement.user.username|default:"System" }}</strong>
+          {% if movement.user %}
+            <span class="{{ movement.user.role_badge_class }} ms-1">{{ movement.user.get_role_display }}</span>
+            <div class="text-muted small mt-1">Username: @{{ movement.user.username }} &bull; ID #{{ movement.user.id }}</div>
+            {% if movement.user.email %}<div class="text-muted small">{{ movement.user.email }}</div>{% endif %}
+          {% else %}
+            <div class="text-muted small">Automated System Operation</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6">
+      <div class="border rounded p-3 h-100">
+        <div class="text-muted small text-uppercase fw-semibold mb-2">
+          <i class="bi bi-clock-history text-primary me-1"></i> Execution Timestamp
+        </div>
+        <div>
+          <strong class="text-dark fs-6">{{ movement.created_at|date:"F d, Y" }}</strong>
+          <div class="font-monospace text-muted small mt-1">{{ movement.created_at|date:"h:i:s A" }} (Local Store Time)</div>
+          <div class="text-muted small">Recorded in database: {{ movement.created_at|date:"Y-m-d H:i:s" }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6">
+      <div class="border rounded p-3 h-100">
+        <div class="text-muted small text-uppercase fw-semibold mb-2">
+          <i class="bi bi-geo-alt text-primary me-1"></i> Inventory Location
+        </div>
+        <div>
+          <strong class="text-dark">{{ movement.location.name|default:"Main Store Facility" }}</strong>
+          {% if movement.location %}
+            <span class="badge bg-light text-dark border ms-1">{{ movement.location.code }}</span>
+          {% endif %}
+          {% if movement.destination_location %}
+            <div class="text-muted small mt-1">
+              Transfer Destination: <strong>{{ movement.destination_location.name }}</strong> ({{ movement.destination_location.code }})
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6">
+      <div class="border rounded p-3 h-100">
+        <div class="text-muted small text-uppercase fw-semibold mb-2">
+          <i class="bi bi-boxes text-primary me-1"></i> Inventory Delta
+        </div>
+        <div>
+          <span class="text-muted">Previous Balance:</span> <strong>{{ movement.previous_quantity }}</strong><br>
+          <span class="text-muted">New Balance:</span> <strong>{{ movement.new_quantity }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="border rounded p-3 bg-light">
+        <div class="text-muted small text-uppercase fw-semibold mb-1">
+          <i class="bi bi-card-text text-primary me-1"></i> Operational Justification & Reference
+        </div>
+        <div class="text-dark fw-medium">{{ movement.reason }}</div>
+        {% if movement.reference %}
+          <div class="mt-2 text-muted small">
+            Document Reference: <span class="font-monospace fw-bold text-dark">{{ movement.reference }}</span>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-footer bg-light justify-content-between">
+  <span class="text-muted small">StockFlow Audit Ledger Verifier</span>
+  <div class="d-flex gap-2">
+    <a href="{% url 'movement_receipt' pk=movement.pk %}" target="_blank" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-printer me-1"></i> Print Single Voucher
+    </a>
+    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+  </div>
+</div>

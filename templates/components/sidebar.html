@@ -85,9 +85,13 @@
     </a>
 
     {% if is_manager %}
-      <a href="{% url 'reports' %}" class="sidebar-nav-item {% if 'reports' in request.path %}active{% endif %}">
+      <a href="{% url 'transaction_reports' %}" class="sidebar-nav-item {% if 'reports/transactions' in request.path or 'reports/receipt' in request.path %}active{% endif %}">
+        <i class="bi bi-file-earmark-text-fill"></i>
+        <span>Transaction Reports</span>
+      </a>
+      <a href="{% url 'reports' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
         <i class="bi bi-file-earmark-bar-graph-fill"></i>
-        <span>Reports & Valuation</span>
+        <span>Stock Valuation</span>
       </a>
     {% endif %}
 

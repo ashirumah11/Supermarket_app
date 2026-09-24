@@ -64,6 +64,7 @@ urlpatterns = [
     # Executive Reports & Valuation
     # ---------------------------------------------------------------------------
     path('reports/', include('reports.urls')),
+    path('api/reports/transactions/', __import__('reports.api', fromlist=['TransactionReportApiView']).TransactionReportApiView.as_view(), name='api_reports_transactions'),
 
     # ---------------------------------------------------------------------------
     # User Management (Admin only)
